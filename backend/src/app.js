@@ -48,6 +48,23 @@ app.use('/api/employee', employeeReviewRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/finance', financeRoutes);
 
+// ---------- Multer 错误处理 ----------
+app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ code: 400, message: '文件大小超过限制（最大20MB）' });
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return res.status(400).json({ code: 400, message: '文件数量超过限制' });
+  }
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({ code: 400, message: '上传字段名不正确' });
+  }
+  if (err.message && err.message.indexOf('不支持的文件类型') >= 0) {
+    return res.status(400).json({ code: 400, message: err.message });
+  }
+  next(err);
+});
+
 // ---------- 404 处理 ----------
 app.use((req, res) => {
   res.status(404).json({ code: 404, message: `接口不存在: ${req.method} ${req.originalUrl}` });

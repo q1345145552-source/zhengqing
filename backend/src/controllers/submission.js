@@ -17,7 +17,7 @@ const submissionController = {
       return res.json({ code: 200, message: '创建成功', data: { ...submission, step1: null, step2: null, step3: null, step4: null, step5: null, files: [] } });
     } catch (err) {
       console.error('[Submission] Create error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -35,7 +35,7 @@ const submissionController = {
       return res.json({ code: 200, message: 'ok', data: full });
     } catch (err) {
       console.error('[Submission] Current error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -56,7 +56,7 @@ const submissionController = {
       return res.json({ code: 200, message: 'ok', data: full });
     } catch (err) {
       console.error('[Submission] Show error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -108,7 +108,7 @@ const submissionController = {
       return res.json({ code: 200, message: '保存成功', data: result });
     } catch (err) {
       console.error('[Submission] SaveStep error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -155,7 +155,7 @@ const submissionController = {
       });
     } catch (err) {
       console.error('[Submission] Upload error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -180,7 +180,7 @@ const submissionController = {
       return res.json({ code: 200, message: '提交成功！我们会尽快处理您的资料' });
     } catch (err) {
       console.error('[Submission] Submit error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -194,7 +194,7 @@ const submissionController = {
       return res.json({ code: 200, message: 'ok', data: list });
     } catch (err) {
       console.error('[Submission] List error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 
@@ -209,7 +209,7 @@ const submissionController = {
       return res.json({ code: 200, message: '已重新提交，等待审核', data: sub });
     } catch (err) {
       console.error('[Submission] Resubmit error:', err);
-      return res.status(500).json({ code: 500, message: '服务器内部错误' });
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
 };

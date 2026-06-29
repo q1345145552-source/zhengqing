@@ -280,7 +280,15 @@ router.get('/client/transactions', async (req, res) => {
 var depositUploadDir = require('path').join(__dirname, '../../uploads/deposits');
 var fs = require('fs');
 if (!fs.existsSync(depositUploadDir)) fs.mkdirSync(depositUploadDir, { recursive: true });
-var depositUpload = require('multer')({ dest: depositUploadDir, limits: { fileSize: 10 * 1024 * 1024 } });
+var depositUpload = require('multer')({
+  dest: depositUploadDir,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: function(req, file, cb) {
+    var allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf'];
+    if (allowed.indexOf(file.mimetype) >= 0) cb(null, true);
+    else cb(new Error('不支持的文件类型: ' + file.mimetype), false);
+  }
+});
 
 router.post('/client/deposit', depositUpload.single('slip'), async (req, res) => {
   try {

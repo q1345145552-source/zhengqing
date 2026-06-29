@@ -48,8 +48,8 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 单文件最大 10MB
-    files: 10,                   // 一次最多 10 个文件
+    fileSize: 20 * 1024 * 1024, // 单文件最大 20MB
+    files: 20,                   // 一次最多 20 个文件
   },
 });
 
