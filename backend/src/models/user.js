@@ -23,12 +23,12 @@ const User = {
   /**
    * 创建用户
    */
-  async create({ username, password, role, email, status = 'active' }) {
+  async create({ username, password, role, email, status = 'active', real_name }) {
     const result = await query(
-      `INSERT INTO users (username, password, role, email, status)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, username, role, email, status, created_at, updated_at`,
-      [username, password, role, email, status]
+      `INSERT INTO users (username, password, role, email, status, real_name)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, username, role, email, status, real_name, created_at, updated_at`,
+      [username, password, role, email, status, real_name || null]
     );
     return result.rows[0];
   },

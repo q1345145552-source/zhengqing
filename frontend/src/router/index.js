@@ -8,6 +8,7 @@ const EmployeeLayout = () => import('@/layouts/EmployeeLayout.vue')
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 
 // 页面组件
+const Register = () => import('@/views/login/Register.vue')
 const Login = () => import('@/views/login/Login.vue')
 const Forbidden = () => import('@/views/error/403.vue')
 const NotFound = () => import('@/views/error/404.vue')
@@ -56,6 +57,12 @@ function getLayoutComponent(role) {
 
 const routes = [
   // ==================== 公共路由 ====================
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    meta: { title: '注册', requiresAuth: false },
+  },
   {
     path: '/login',
     name: 'Login',

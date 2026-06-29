@@ -3,6 +3,9 @@ const router = express.Router();
 const authController = require('../controllers/auth');
 const auth = require('../middleware/auth');
 
+// POST /api/auth/register - 客户注册
+router.post('/register', authController.register);
+
 // POST /api/auth/login - 用户登录
 router.post('/login', authController.login);
 

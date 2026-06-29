@@ -77,6 +77,52 @@ const authController = {
       return res.json({ code: 500, message: msg });
     }
   },
+
+  /**
+   * POST /api/auth/register
+   * 客户自助注册
+   */
+  async register(req, res) {
+    try {
+      const { username, password, email, real_name } = req.body;
+
+      if (!username || !password) {
+        return res.json({ code: 400, message: '用户名和密码为必填项' });
+      }
+      if (username.length < 3 || username.length > 50) {
+        return res.json({ code: 400, message: '用户名长度需要3-50个字符' });
+      }
+      if (password.length < 6) {
+        return res.json({ code: 400, message: '密码长度不能少于6位' });
+      }
+
+      const existing = await User.findByUsername(username);
+      if (existing) {
+        return res.json({ code: 400, message: '用户名已存在，请更换' });
+      }
+
+      const bcrypt = require('bcryptjs');
+      const hash = await bcrypt.hash(password, 10);
+      const user = await User.create({
+        username,
+        password: hash,
+        role: 'client',
+        email: email || null,
+        real_name: real_name || null,
+      });
+
+      return res.json({
+        code: 200,
+        message: '注册成功',
+        data: { id: user.id, username: user.username, role: user.role },
+      });
+    } catch (err) {
+      console.error('[Auth] Register error:', err);
+      const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message;
+      return res.json({ code: 500, message: msg });
+    }
+  },
+
 };
 
 module.exports = authController;
