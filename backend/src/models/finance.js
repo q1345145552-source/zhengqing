@@ -346,10 +346,10 @@ const Finance = {
 
   // ========== 充值申请审核 ==========
 
-  async createDepositRequest(userId, amount, description) {
+  async createDepositRequest(userId, amount, description, slipPath) {
     var r = await query(
-      'INSERT INTO deposit_requests (user_id, amount, description) VALUES ($1, $2, $3) RETURNING *',
-      [userId, amount, description || null]
+      'INSERT INTO deposit_requests (user_id, amount, description, payment_slip) VALUES ($1, $2, $3, $4) RETURNING *',
+      [userId, amount, description || null, slipPath || null]
     );
     var req = r.rows[0];
     var emps = await query(

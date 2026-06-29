@@ -276,14 +276,30 @@ router.get('/client/transactions', async (req, res) => {
   try { const data = await Finance.getTransactions(req.user.id, parseInt(req.query.page) || 1); res.json({ code: 200, data }); }
   catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
-router.post('/client/deposit', async (req, res) => {
+// 充值申请上传目录
+var depositUploadDir = require('path').join(__dirname, '../../uploads/deposits');
+var fs = require('fs');
+if (!fs.existsSync(depositUploadDir)) fs.mkdirSync(depositUploadDir, { recursive: true });
+var depositUpload = require('multer')({ dest: depositUploadDir, limits: { fileSize: 10 * 1024 * 1024 } });
+
+router.post('/client/deposit', depositUpload.single('slip'), async (req, res) => {
   try {
-    const { amount, description } = req.body;
+    var amount = req.body.amount;
+    var description = req.body.description;
     if (!amount || amount <= 0) return res.json({ code: 400, message: '请输入有效金额' });
+    // Save uploaded slip file
+    var slipPath = null;
+    if (req.file) {
+      var ext = require('path').extname(req.file.originalname);
+      var newName = Date.now() + '_' + Math.round(Math.random() * 1e9) + ext;
+      var destPath = require('path').join(depositUploadDir, newName);
+      fs.renameSync(req.file.path, destPath);
+      slipPath = '/uploads/deposits/' + newName;
+    }
     // 创建充值申请，等待员工审核
-    const data = await Finance.createDepositRequest(req.user.id, parseFloat(amount), description || '在线充值');
+    var data = await Finance.createDepositRequest(req.user.id, parseFloat(amount), description || '在线充值', slipPath);
     res.json({ code: 200, message: '充值申请已提交，等待员工审核', data: data });
-  } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
+  } catch (err) { console.error(err); var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
 });
 
 // 客户端查看自己的充值申请列表

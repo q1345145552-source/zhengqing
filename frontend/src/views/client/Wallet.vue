@@ -14,7 +14,7 @@
     </el-card>
 
     <!-- 充值弹窗 -->
-    <el-dialog v-model="showRecharge" title="账户充值" width="400px">
+    <el-dialog v-model="showRecharge" title="账户充值" width="480px">
       <el-form :model="rechargeForm" label-width="80px">
         <el-form-item label="充值金额">
           <el-input-number v-model="rechargeForm.amount" :min="100" :step="100" :precision="2" style="width:100%" placeholder="请输入充值金额" />
@@ -22,18 +22,63 @@
         <el-form-item label="备注">
           <el-input v-model="rechargeForm.description" placeholder="充值说明（选填）" />
         </el-form-item>
+        <el-form-item label="支付水单">
+          <el-upload
+            :auto-upload="false"
+            :limit="1"
+            :on-change="handleSlipChange"
+            :on-remove="handleSlipRemove"
+            :file-list="slipFileList"
+            accept="image/*,.pdf"
+            list-type="picture"
+          >
+            <el-button type="primary" :disabled="slipFileList.length >= 1">
+              选择水单图片
+            </el-button>
+            <template #tip>
+              <div class="el-upload__tip">上传转账凭证，支持图片或PDF</div>
+            </template>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showRecharge = false">取消</el-button>
-        <el-button type="primary" :loading="recharging" @click="handleRecharge">确认充值</el-button>
+        <el-button type="primary" :loading="recharging" @click="handleRecharge">提交充值申请</el-button>
       </template>
     </el-dialog>
+
+    <!-- 充值申请记录 -->
+    <el-card header="充值申请记录" style="margin-top:20px">
+      <el-table :data="depositRequests" stripe v-loading="reqLoading" empty-text="暂无充值申请">
+        <el-table-column label="申请时间" width="170">
+          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column label="金额" width="120">
+          <template #default="{ row }">+ {{ row.amount }} ฿</template>
+        </el-table-column>
+        <el-table-column prop="description" label="说明" min-width="120" show-overflow-tooltip />
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="reqStatusTag(row.status)" size="small">{{ reqStatusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核备注" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.review_comment || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="水单" width="80">
+          <template #default="{ row }">
+            <el-button v-if="row.payment_slip" type="primary" link size="small" @click="previewSlip(row.payment_slip)">查看</el-button>
+            <span v-else style="color:#C0C4CC">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
     <!-- 交易记录 -->
     <el-card header="交易记录" style="margin-top:20px">
       <el-table :data="transactions" stripe v-loading="loading" empty-text="暂无交易记录">
         <el-table-column label="时间" width="170">
-          <template #default="{ row }">{{ format(row.created_at) }}</template>
+          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
         </el-table-column>
         <el-table-column label="类型" width="90">
           <template #default="{ row }">
@@ -42,14 +87,14 @@
         </el-table-column>
         <el-table-column label="金额" width="120">
           <template #default="{ row }">
-            <span :style="{ color: row.type === 'deposit' ? '#67C23A' : '#F56C6C' }">
-              {{ row.type === 'deposit' ? '+' : '-' }} ¥{{ row.amount }}
+            <span :style="{ color: row.type === 'deposit' || row.type === 'refund' ? '#67C23A' : '#F56C6C' }">
+              {{ row.type === 'deposit' || row.type === 'refund' ? '+' : '-' }} ¥{{ row.amount }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="说明" min-width="180" show-overflow-tooltip />
-        <el-table-column label="申请编号" width="150">
-          <template #default="{ row }">{{ row.application_no || '-' }}</template>
+        <el-table-column label="操作人" width="100">
+          <template #default="{ row }">{{ row.operated_by_name || '-' }}</template>
         </el-table-column>
         <el-table-column label="余额" width="120">
           <template #default="{ row }">¥{{ row.balance_after }}</template>
@@ -65,29 +110,56 @@
         @current-change="loadTransactions"
       />
     </el-card>
+
+    <!-- 水单预览弹窗 -->
+    <el-dialog v-model="showSlip" title="支付水单" width="600px">
+      <img v-if="slipUrl && !slipUrl.toLowerCase().endsWith('.pdf')" :src="slipUrl" style="width:100%;max-height:70vh;object-fit:contain" />
+      <div v-else style="text-align:center;padding:40px">
+        <el-link :href="slipUrl" target="_blank" type="primary" :underline="false">
+          <el-icon :size="60"><Document /></el-icon>
+          <div style="margin-top:12px">点击查看PDF文件</div>
+        </el-link>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getWallet, getTransactions, clientDeposit } from '@/api/finance'
+import { getWallet, getTransactions, getClientDepositRequests } from '@/api/finance'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const balance = ref(0)
 const transactions = ref([])
+const depositRequests = ref([])
 const loading = ref(false)
+const reqLoading = ref(false)
 const page = ref(1)
 const total = ref(0)
 const showRecharge = ref(false)
 const recharging = ref(false)
 const rechargeForm = ref({ amount: 1000, description: '' })
+const slipFileList = ref([])
+const slipFile = ref(null)
+const showSlip = ref(false)
+const slipUrl = ref('')
 
 onMounted(async () => {
-  try { const w = await getWallet(); balance.value = w.data.balance }
-  catch { /* ignore */ }
+  try { const w = await getWallet(); balance.value = w.data.balance } catch { /* */ }
   loadTransactions()
+  loadDepositRequests()
 })
+
+function handleSlipChange(file) {
+  slipFile.value = file.raw
+  slipFileList.value = [file]
+}
+
+function handleSlipRemove() {
+  slipFile.value = null
+  slipFileList.value = []
+}
 
 async function handleRecharge() {
   if (!rechargeForm.value.amount || rechargeForm.value.amount <= 0) {
@@ -96,24 +168,54 @@ async function handleRecharge() {
   }
   recharging.value = true
   try {
-    await clientDeposit(rechargeForm.value.amount, rechargeForm.value.description || '在线充值')
+    const formData = new FormData()
+    formData.append('amount', String(rechargeForm.value.amount))
+    formData.append('description', rechargeForm.value.description || '在线充值')
+    if (slipFile.value) {
+      formData.append('slip', slipFile.value)
+    }
+    await request.post('/finance/client/deposit', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     ElMessage.success('充值申请已提交，等待员工审核')
     showRecharge.value = false
     rechargeForm.value = { amount: 1000, description: '' }
+    slipFile.value = null
+    slipFileList.value = []
+    loadDepositRequests()
   } catch { /* handled */ }
   finally { recharging.value = false }
 }
 
+async function loadDepositRequests() {
+  reqLoading.value = true
+  try {
+    const res = await getClientDepositRequests()
+    depositRequests.value = res.data.list || []
+  } catch { /* */ }
+  finally { reqLoading.value = false }
+}
+
 async function loadTransactions() {
   loading.value = true
-  try { const res = await getTransactions(page.value); transactions.value = res.data.list; total.value = res.data.total }
-  catch { /* ignore */ }
+  try {
+    const res = await getTransactions(page.value)
+    transactions.value = res.data.list
+    total.value = res.data.total
+  } catch { /* */ }
   finally { loading.value = false }
 }
 
+function previewSlip(path) {
+  slipUrl.value = path
+  showSlip.value = true
+}
+
 function typeTag(t) { return t === 'deposit' ? 'success' : t === 'refund' ? 'warning' : 'danger' }
-function typeLabel(t) { return t === 'deposit' ? '充值' : t === 'refund' ? '退款' : '扣费' }
-function format(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
+function typeLabel(t) { return t === 'deposit' ? '充值到账' : t === 'refund' ? '退款' : '扣费' }
+function reqStatusTag(s) { return s === 'approved' ? 'success' : s === 'rejected' ? 'danger' : 'warning' }
+function reqStatusLabel(s) { return s === 'approved' ? '已通过' : s === 'rejected' ? '已拒绝' : '待审核' }
+function formatDate(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
 </script>
 
 <style scoped>
