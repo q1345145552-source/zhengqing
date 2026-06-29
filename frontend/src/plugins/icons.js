@@ -29,6 +29,8 @@ const icons = [
   'MapLocation', 'Location', 'Phone',
   // 展开收起
   'Expand', 'Fold',
+  // 银行和物流
+  'Bank', 'Box',
 ]
 
 export function registerIcons(app) {
