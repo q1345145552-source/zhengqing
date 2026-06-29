@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getWallet, getTransactions } from '@/api/finance'
+import { getWallet, getTransactions, clientDeposit } from '@/api/finance'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
@@ -96,14 +96,10 @@ async function handleRecharge() {
   }
   recharging.value = true
   try {
-    await request.post('/finance/client/deposit', {
-      amount: rechargeForm.value.amount,
-      description: rechargeForm.value.description || '在线充值',
-    })
-    ElMessage.success('充值成功')
+    await clientDeposit(rechargeForm.value.amount, rechargeForm.value.description || '在线充值')
+    ElMessage.success('充值申请已提交，等待员工审核')
     showRecharge.value = false
-    const w = await getWallet(); balance.value = w.data.balance
-    loadTransactions()
+    rechargeForm.value = { amount: 1000, description: '' }
   } catch { /* handled */ }
   finally { recharging.value = false }
 }

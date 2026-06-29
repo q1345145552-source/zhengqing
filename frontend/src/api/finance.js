@@ -21,3 +21,17 @@ export function updatePriceRule(id, data) { return request.put(`/finance/admin/p
 export function createPriceRule(data) { return request.post('/finance/admin/price-rules', data) }
 export function deletePriceRule(id) { return request.delete(`/finance/admin/price-rules/${id}`) }
 export function adminDeposit(userId, amount, description) { return request.post('/finance/admin/deposit', { user_id: userId, amount, description }) }
+
+// ===== 充值申请 =====
+export function clientDeposit(amount, description) {
+  return request.post('/finance/client/deposit', { amount, description })
+}
+export function getClientDepositRequests(page, pageSize) {
+  return request.get('/finance/client/deposit-requests', { params: { page: page || 1, pageSize: pageSize || 20 } })
+}
+export function getDepositRequests(filter, page, pageSize) {
+  return request.get('/finance/employee/deposit-requests', { params: { filter: filter || 'pending', page: page || 1, pageSize: pageSize || 20 } })
+}
+export function reviewDepositRequest(id, action, comment) {
+  return request.put('/finance/employee/deposit-requests/' + id, { action: action, comment: comment })
+}

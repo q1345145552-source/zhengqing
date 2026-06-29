@@ -30,6 +30,7 @@ const EmployeeTracking = () => import('@/views/employee/review/Tracking.vue')
 const EmployeePendingCharge = () => import('@/views/employee/review/PendingCharge.vue')
 const EmployeeFeeEstimate = () => import('@/views/employee/review/FeeEstimate.vue')
 const EmployeeExportSummary = () => import('@/views/employee/review/ExportSummary.vue')
+const EmployeeDepositReview = () => import('@/views/employee/review/DepositReview.vue')
 const AdminDashboard = () => import('@/views/admin/Dashboard.vue')
 const AdminSubmissionsList = () => import('@/views/admin/submissions/List.vue')
 const AdminSubmissionsDetail = () => import('@/views/admin/submissions/Detail.vue')
@@ -192,6 +193,12 @@ const routes = [
         name: 'EmployeeReviewHistory',
         component: EmployeeReviewHistory,
         meta: { title: '审核记录', icon: 'Notebook' },
+      },
+      {
+        path: 'deposit-review',
+        name: 'EmployeeDepositReview',
+        component: EmployeeDepositReview,
+        meta: { title: '充值审核', icon: 'Money' },
       },
       {
         path: 'tracking',

@@ -30,6 +30,11 @@
           <template #title>审核记录</template>
         </el-menu-item>
 
+        <el-menu-item index="/employee/deposit-review">
+          <el-icon><Money /></el-icon>
+          <template #title>充值审核</template>
+        </el-menu-item>
+
         <el-menu-item index="/employee/tracking">
           <el-icon><Ship /></el-icon>
           <template #title>货物追踪</template>
