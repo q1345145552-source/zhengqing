@@ -13,6 +13,38 @@
       </el-button>
     </el-card>
 
+    <!-- 收款银行账户 -->
+    <el-card header="收款银行账户" shadow="hover" style="margin-top:20px">
+      <template #header>
+        <div style="display:flex;align-items:center;gap:8px">
+          <el-icon color="#409EFF"><Bank /></el-icon>
+          <span>公司收款账户（泰国公户）</span>
+          <el-tag type="warning" size="small">仅接收清关公司抬头转账</el-tag>
+        </div>
+      </template>
+      <el-descriptions :column="2" border size="large">
+        <el-descriptions-item label="银行名称" label-align="right">
+          <strong>กรุงไทย (Krungthai Bank)</strong>
+        </el-descriptions-item>
+        <el-descriptions-item label="账户名称" label-align="right">
+          <strong>XT Logistics Co., Ltd.</strong>
+        </el-descriptions-item>
+        <el-descriptions-item label="账号" label-align="right">
+          <strong style="font-size:16px;color:#409EFF">123-4-56789-0</strong>
+        </el-descriptions-item>
+        <el-descriptions-item label="SWIFT" label-align="right">
+          <strong>KRTHTHBK</strong>
+        </el-descriptions-item>
+        <el-descriptions-item label="银行地址" label-align="right" :span="2">
+          123 Ratchadaphisek Road, Bangkok 10400, Thailand
+        </el-descriptions-item>
+      </el-descriptions>
+      <div style="margin-top:12px;padding:10px;background:#fdf6ec;border-radius:6px;color:#E6A23C;font-size:13px">
+        <el-icon><WarningFilled /></el-icon>
+        请使用需要清关的公司抬头转账。转账时请备注您的用户名，并上传水单。只接受需要清关抬头的公司转账，其他抬头式的转账不接受。
+      </div>
+    </el-card>
+
     <!-- 充值弹窗 -->
     <el-dialog v-model="showRecharge" title="账户充值" width="480px">
       <el-form :model="rechargeForm" label-width="80px">
