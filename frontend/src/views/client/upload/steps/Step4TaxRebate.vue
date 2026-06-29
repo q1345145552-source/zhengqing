@@ -8,7 +8,7 @@
       在货物入仓前，请确认客户是否需要申请中国出口退税。
     </p>
 
-    <el-form ref="formRef" :model="form" label-position="top">
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
       <!-- 是否需要退税 -->
       <el-form-item label="是否需要申请中国出口退税？" required>
         <el-radio-group v-model="form.need_rebate" @change="handleRebateChange">
@@ -174,11 +174,17 @@ async function handleFileChange(event, field) {
   }
 }
 
+var rules = {
+  need_rebate: [{ required: true, message: '请选择退税类型', trigger: 'change', validator: function(rule, value, cb) { if (value === null || value === undefined) cb(new Error('请选择是否需要退税')); else cb(); } }],
+  customs_company_name: [{ required: true, message: '请输入报关公司名称', trigger: 'blur' }],
+  logistics_code: [{ required: true, message: '请输入物流编码', trigger: 'blur' }],
+};
+
 function getFormData() {
   return { ...form }
 }
 
-defineExpose({ getFormData })
+defineExpose({ getFormData, formRef })
 </script>
 
 <style lang="scss" scoped>

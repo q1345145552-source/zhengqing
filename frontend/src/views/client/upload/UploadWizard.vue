@@ -156,6 +156,15 @@ async function nextStep() {
     ElMessage.warning('资料已提交，无法修改')
     return
   }
+  // 校验当前步骤表单
+  if (currentStepRef && currentStepRef.formRef) {
+    try {
+      await currentStepRef.formRef.validate()
+    } catch {
+      ElMessage.warning('请填写当前步骤的必填项')
+      return
+    }
+  }
   saving.value = true
   try {
     await saveCurrentStep()

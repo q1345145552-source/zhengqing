@@ -244,11 +244,15 @@ function formatShort(d) {
   return new Date(d).toLocaleDateString('zh-CN')
 }
 
+var rules = {
+  company_name: [{ required: true, message: '请输入公司名称', trigger: 'blur' }],
+};
+
 function getFormData() {
   return { ...form }
 }
 
-defineExpose({ getFormData })
+defineExpose({ getFormData, formRef })
 </script>
 
 <style lang="scss" scoped>

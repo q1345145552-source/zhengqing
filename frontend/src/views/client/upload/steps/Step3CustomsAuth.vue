@@ -39,7 +39,7 @@
       </el-radio-group>
     </div>
 
-    <el-form ref="formRef" :model="form" label-position="top">
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
       <!-- 办理方式选择 -->
       <el-form-item label="请选择办理方式" required>
         <el-radio-group v-model="form.handler_type" @change="emitUpdate">
@@ -243,11 +243,15 @@ async function handleFileChange(event, field) {
   }
 }
 
+var rules = {
+  handler_type: [{ required: true, message: '请选择授权类型', trigger: 'change' }],
+};
+
 function getFormData() {
   return { ...form }
 }
 
-defineExpose({ getFormData })
+defineExpose({ getFormData, formRef })
 </script>
 
 <style lang="scss" scoped>

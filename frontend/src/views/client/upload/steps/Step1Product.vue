@@ -8,7 +8,7 @@
       请提供产品图片、泰文名称及英文名称，由我们协助确认产品进口信息。
     </p>
 
-    <el-form ref="formRef" :model="form" label-width="140px" label-position="top">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="140px" label-position="top">
       <!-- 产品图片 -->
       <el-form-item label="产品图片" required>
         <el-upload
@@ -199,6 +199,11 @@ function emitUpdate() {
   emit('update', { ...form })
 }
 
+var rules = {
+  thai_name: [{ required: true, message: '请输入产品泰文名称', trigger: 'blur' }],
+  english_name: [{ required: true, message: '请输入产品英文名称', trigger: 'blur' }],
+};
+
 function getFormData() {
   return {
     product_images: form.product_images,
@@ -207,7 +212,7 @@ function getFormData() {
   }
 }
 
-defineExpose({ getFormData })
+defineExpose({ getFormData, formRef })
 </script>
 
 <style lang="scss" scoped>
