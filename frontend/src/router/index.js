@@ -32,6 +32,7 @@ const EmployeePendingCharge = () => import('@/views/employee/review/PendingCharg
 const EmployeeFeeEstimate = () => import('@/views/employee/review/FeeEstimate.vue')
 const EmployeeExportSummary = () => import('@/views/employee/review/ExportSummary.vue')
 const EmployeeDepositReview = () => import('@/views/employee/review/DepositReview.vue')
+const EmployeeClientReview = () => import('@/views/employee/review/ClientReview.vue')
 const AdminDashboard = () => import('@/views/admin/Dashboard.vue')
 const AdminSubmissionsList = () => import('@/views/admin/submissions/List.vue')
 const AdminSubmissionsDetail = () => import('@/views/admin/submissions/Detail.vue')
@@ -206,6 +207,12 @@ const routes = [
         name: 'EmployeeDepositReview',
         component: EmployeeDepositReview,
         meta: { title: '充值审核', icon: 'Money' },
+      },
+      {
+        path: 'client-review',
+        name: 'EmployeeClientReview',
+        component: EmployeeClientReview,
+        meta: { title: '客户审核', icon: 'UserFilled' },
       },
       {
         path: 'tracking',

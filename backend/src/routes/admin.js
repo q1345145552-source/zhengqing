@@ -10,6 +10,51 @@ const auth = require('../middleware/auth');
 const role = require('../middleware/role');
 
 router.use(auth);
+// ==================== 客户审核（员工+管理员） ====================
+router.get('/client-review', async (req, res) => {
+  try {
+    var filter = req.query.filter || 'pending';
+    var page = Math.max(1, parseInt(req.query.page) || 1);
+    var pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 20));
+    var offset = (page - 1) * pageSize;
+    var where = "role = 'client'";
+    if (filter === 'pending') where += " AND status = 'pending'";
+    else if (filter === 'rejected') where += " AND status = 'rejected'";
+    else if (filter === 'active') where += " AND status = 'active'";
+    else where += " AND status IN ('pending','rejected')";
+    var cnt = await query('SELECT COUNT(*) FROM users WHERE ' + where);
+    var rows = await query('SELECT id, username, real_name, email, status, created_at FROM users WHERE ' + where + ' ORDER BY created_at DESC LIMIT $1 OFFSET $2', [pageSize, offset]);
+    res.json({ code: 200, data: { list: rows.rows, total: parseInt(cnt.rows[0].count), page: page, pageSize: pageSize } });
+  } catch (err) { console.error(err); var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
+});
+
+router.put('/client-review/:id', async (req, res) => {
+  try {
+    var action = req.body.action;
+    var comment = req.body.comment;
+    if (!action || ['approve','reject'].indexOf(action) === -1) {
+      return res.json({ code: 400, message: '请指定操作: approve 或 reject' });
+    }
+    var newStatus = action === 'approve' ? 'active' : 'rejected';
+    var result = await query('UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND role = $3 RETURNING id, username, real_name, status', [newStatus, req.params.id, 'client']);
+    if (result.rowCount === 0) return res.json({ code: 404, message: '客户不存在' });
+    var client = result.rows[0];
+    // Notify client
+    var notiTitle, notiContent;
+    if (action === 'approve') {
+      notiTitle = '账号审核通过';
+      notiContent = '恭喜，您的账号已通过审核，现在可以登录使用了';
+    } else {
+      notiTitle = '账号审核未通过';
+      notiContent = '您的账号审核未通过' + (comment ? '，原因：' + comment : '，请联系客服了解详情');
+    }
+    await query("INSERT INTO notifications (user_id, title, content, type) VALUES ($1, $2, $3, 'warning')", [client.id, notiTitle, notiContent]);
+    res.json({ code: 200, message: action === 'approve' ? '已通过审核' : '已拒绝', data: client });
+  } catch (err) { console.error(err); var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
+});
+
+
+
 router.use(role('admin'));
 
 // ==================== 统计 ====================
@@ -316,5 +361,6 @@ router.get('/tracking', async (req, res) => {
     res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
+
 
 module.exports = router;

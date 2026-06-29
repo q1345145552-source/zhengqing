@@ -147,8 +147,8 @@ async function handleRegister() {
       email: form.email || undefined,
       real_name: form.real_name || undefined,
     })
-    ElMessage.success('注册成功！请登录')
-    router.push('/login')
+    ElMessage.success('注册成功，请等待管理员审核您的账号')
+    setTimeout(function() { router.push('/login') }, 1500)
   } catch (err) {
     console.error('Register failed:', err)
   } finally {

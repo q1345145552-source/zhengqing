@@ -25,6 +25,12 @@ const authController = {
       }
 
       // 检查用户状态
+      if (user.status === 'pending') {
+        return res.json({ code: 403, message: '您的账号正在审核中，请耐心等待' });
+      }
+      if (user.status === 'rejected') {
+        return res.json({ code: 403, message: '您的账号审核未通过，请联系客服' });
+      }
       if (user.status === 'disabled') {
         return res.json({ code: 403, message: '您的账号已被禁用，请联系管理员' });
       }
@@ -109,12 +115,25 @@ const authController = {
         role: 'client',
         email: email || null,
         real_name: real_name || null,
+        status: 'pending',
       });
+
+      // Notify all employees about new registration
+      const { query } = require('../db');
+      const emps = await query("SELECT id FROM users WHERE role IN ('employee','admin') AND status = 'active'");
+      for (var i = 0; i < emps.rows.length; i++) {
+        var notiTitle = '新客户注册待审核';
+        var notiContent = '客户 ' + username + (real_name ? '（' + real_name + '）' : '') + ' 已注册，请尽快审核';
+        await query(
+          "INSERT INTO notifications (user_id, title, content, type) VALUES ($1, $2, $3, 'warning')",
+          [emps.rows[i].id, notiTitle, notiContent]
+        );
+      }
 
       return res.json({
         code: 200,
-        message: '注册成功',
-        data: { id: user.id, username: user.username, role: user.role },
+        message: '注册成功，请等待管理员审核您的账号',
+        data: { id: user.id, username: user.username, role: user.role, status: 'pending' },
       });
     } catch (err) {
       console.error('[Auth] Register error:', err);

@@ -25,6 +25,11 @@
           <template #title>客户申请</template>
         </el-menu-item>
 
+        <el-menu-item index="/employee/client-review">
+          <el-icon><UserFilled /></el-icon>
+          <template #title>客户审核</template>
+        </el-menu-item>
+
         <el-menu-item index="/employee/review-history">
           <el-icon><Notebook /></el-icon>
           <template #title>审核记录</template>
