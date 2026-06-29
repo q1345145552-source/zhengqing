@@ -279,11 +279,21 @@ router.get('/client/transactions', async (req, res) => {
 router.post('/client/deposit', async (req, res) => {
   try {
     const { amount, description } = req.body;
-    if (!amount || amount <= 0) return res.status(400).json({ code: 400, message: '请输入有效金额' });
-    const data = await Finance.deposit(req.user.id, parseFloat(amount), description || '在线充值', req.user.id, req.user.username);
-    await Finance.createNotification(req.user.id, '充值到账', `您已成功充值 ฿${amount}，当前余额 ฿${data.balance}`, 'success', null, null);
-    res.json({ code: 200, message: '充值成功', data });
-  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
+    if (!amount || amount <= 0) return res.json({ code: 400, message: '请输入有效金额' });
+    // 创建充值申请，等待员工审核
+    const data = await Finance.createDepositRequest(req.user.id, parseFloat(amount), description || '在线充值');
+    res.json({ code: 200, message: '充值申请已提交，等待员工审核', data: data });
+  } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
+});
+
+// 客户端查看自己的充值申请列表
+router.get('/client/deposit-requests', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const data = await Finance.getDepositRequests('all', page, pageSize, req.user.id);
+    res.json({ code: 200, data: data });
+  } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
 });
 router.get('/client/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }
@@ -292,6 +302,29 @@ router.get('/client/submissions/:id/charges', async (req, res) => {
 
 // ==================== 员工端 ====================
 router.use('/employee', role('employee', 'admin'));
+
+// 充值申请列表（员工审核用）
+router.get('/employee/deposit-requests', async (req, res) => {
+  try {
+    const filter = req.query.filter || 'pending';
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const data = await Finance.getDepositRequests(filter, page, pageSize);
+    res.json({ code: 200, data: data });
+  } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
+});
+
+// 审核充值申请（通过/拒绝）
+router.put('/employee/deposit-requests/:id', async (req, res) => {
+  try {
+    const { action, comment } = req.body;
+    if (!action || !['approve', 'reject'].includes(action)) {
+      return res.json({ code: 400, message: '请指定操作类型: approve 或 reject' });
+    }
+    const data = await Finance.reviewDepositRequest(req.params.id, action, req.user.id, comment);
+    res.json({ code: 200, message: action === 'approve' ? '已通过，余额已到账' : '已拒绝', data: data });
+  } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(400).json({ code: 400, message: msg }); }
+});
 
 router.get('/employee/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }

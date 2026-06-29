@@ -343,6 +343,72 @@ const Finance = {
   async markAllRead(userId) {
     await query('UPDATE notifications SET is_read = true WHERE user_id = $1', [userId]);
   },
+
+  // ========== 充值申请审核 ==========
+
+  async createDepositRequest(userId, amount, description) {
+    var r = await query(
+      'INSERT INTO deposit_requests (user_id, amount, description) VALUES ($1, $2, $3) RETURNING *',
+      [userId, amount, description || null]
+    );
+    var req = r.rows[0];
+    var emps = await query(
+      "SELECT id FROM users WHERE role IN ('employee','admin') AND status = 'active'"
+    );
+    for (var i = 0; i < emps.rows.length; i++) {
+      await Finance.createNotification(emps.rows[i].id, "新的充值申请",
+        '客户提交了一笔充值申请，金额：' + amount + ' ฿，请尽快审核',
+        'warning', 'deposit', req.id);
+    }
+    return req;
+  },
+
+  async getDepositRequests(filter, page, pageSize, userId) {
+    var offset = (page - 1) * pageSize;
+    var where = "";
+    var params = [];
+    if (userId) {
+      where = "WHERE dr.user_id = $1";
+      params.push(userId);
+    }
+    if (filter === 'pending') {
+      where += (where ? ' AND' : 'WHERE') + " dr.status = 'pending'";
+    } else if (filter === 'processed') {
+      where += (where ? ' AND' : 'WHERE') + " dr.status IN ('approved', 'rejected')";
+    }
+    var cntResult = await query("SELECT COUNT(*) FROM deposit_requests dr " + where, params);
+    var total = parseInt(cntResult.rows[0].count);
+    var p1 = params.length + 1;
+    var p2 = params.length + 2;
+    var sql = "SELECT dr.*, u.username FROM deposit_requests dr JOIN users u ON dr.user_id = u.id " + where + " ORDER BY dr.created_at DESC LIMIT $" + p1 + " OFFSET $" + p2;
+    var rowsResult = await query(sql, params.concat([pageSize, offset]));
+    return { list: rowsResult.rows, total: total, page: page, pageSize: pageSize };
+  },
+
+  async reviewDepositRequest(requestId, action, reviewerId, comment) {
+    var reqResult = await query("SELECT * FROM deposit_requests WHERE id = $1", [requestId]);
+    var req = reqResult.rows[0];
+    if (!req) throw new Error('充值申请不存在');
+    if (req.status !== 'pending') throw new Error('该申请已被处理');
+    var newStatus = action === 'approve' ? 'approved' : 'rejected';
+    await query(
+      'UPDATE deposit_requests SET status = $1, reviewed_by = $2, review_comment = $3, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
+      [newStatus, reviewerId, comment || null, requestId]
+    );
+    if (action === 'approve') {
+      var result = await Finance.deposit(req.user_id, parseFloat(req.amount),
+        req.description || '充值申请通过', reviewerId, null);
+      await Finance.createNotification(req.user_id, '充值申请已通过',
+        '您的充值申请（金额：' + req.amount + ' ฿）已审核通过，余额已到账',
+        'success', 'deposit', requestId);
+      return { approved: true, balance: result.balance };
+    } else {
+      var msg = '您的充值申请（金额：' + req.amount + ' ฿）已被拒绝';
+      if (comment) msg += '，原因：' + comment;
+      await Finance.createNotification(req.user_id, '充值申请已拒绝', msg, 'warning', 'deposit', requestId);
+      return { approved: false };
+    }
+  },
 };
 
 module.exports = Finance;
