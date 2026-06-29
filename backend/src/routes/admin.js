@@ -23,7 +23,7 @@ router.get('/stats', async (req, res) => {
       query("SELECT COUNT(*) AS c FROM submissions WHERE review_status='registered'"),
     ]);
     res.json({ code: 200, data: { total_users: parseInt(u.rows[0].c), total_submissions: parseInt(s.rows[0].c), pending_reviews: parseInt(p.rows[0].c), approved: parseInt(a.rows[0].c), rejected: parseInt(r.rows[0].c), registered: parseInt(reg.rows[0].c) } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 管理后台首页全量统计
@@ -97,7 +97,7 @@ router.get('/dashboard', async (req, res) => {
         recent_orders: recentOrders,
       },
     });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 申请管理 ====================
@@ -125,17 +125,17 @@ router.get('/submissions', async (req, res) => {
        WHERE ${where} ORDER BY s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
     );
     res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/submissions/:id', async (req, res) => {
   try { const data = await EmployeeReview.detail(req.params.id); if (!data) return res.status(404).json({ code: 404, message: '提交不存在' }); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 员工管理 ====================
 router.get('/employees', async (req, res) => {
   try { const { rows } = await query("SELECT id, username, real_name, email, role, status, created_at, updated_at FROM users WHERE role = 'employee' ORDER BY id"); res.json({ code: 200, data: rows }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/employees', async (req, res) => {
   try {
@@ -148,7 +148,7 @@ router.post('/employees', async (req, res) => {
     const user = await User.create({ username, password: hash, role: 'employee', email: email || null });
     await query('UPDATE users SET real_name = $1 WHERE id = $2', [real_name || null, user.id]);
     res.json({ code: 200, message: '创建成功', data: { ...user, real_name: real_name || null, generated_password: password } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/employees/:id', async (req, res) => {
   try {
@@ -162,7 +162,7 @@ router.put('/employees/:id', async (req, res) => {
     const { rows: [u] } = await query(`UPDATE users SET ${fields.join(', ')} WHERE id = $1 AND role = $2 RETURNING id, username, real_name, email, role, status, created_at, updated_at`, [...values, 'employee']);
     if (!u) return res.status(404).json({ code: 404, message: '员工不存在' });
     res.json({ code: 200, message: '更新成功', data: u });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/employees/:id/status', async (req, res) => {
   try {
@@ -170,7 +170,7 @@ router.put('/employees/:id/status', async (req, res) => {
     const { rowCount } = await query("UPDATE users SET status = $1 WHERE id = $2 AND role = 'employee'", [status, req.params.id]);
     if (rowCount === 0) return res.status(404).json({ code: 404, message: '员工不存在' });
     res.json({ code: 200, message: status === 'active' ? '已启用' : '已禁用' });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 客户管理 ====================
@@ -182,7 +182,7 @@ router.get('/customers', async (req, res) => {
        FROM users u WHERE u.role = 'client' ORDER BY u.id`
     );
     res.json({ code: 200, data: rows });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/customers/:id', async (req, res) => {
   try {
@@ -192,34 +192,34 @@ router.get('/customers/:id', async (req, res) => {
     const wallet = await Finance.getWallet(req.params.id).catch(() => ({ balance: 0 }));
     const { rows: txs } = await query('SELECT * FROM wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [req.params.id]);
     res.json({ code: 200, data: { ...u, wallet_balance: parseFloat(wallet.balance), submissions: subs, transactions: txs } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/customers/:id/submissions', async (req, res) => {
   try { const { rows } = await query("SELECT id, application_no, COALESCE(current_step,0) AS current_step, status, review_status, created_at FROM submissions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50", [req.params.id]); res.json({ code: 200, data: rows }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/customers/:id/transactions', async (req, res) => {
   try { const { rows } = await query('SELECT * FROM wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [req.params.id]); res.json({ code: 200, data: rows }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/customers/:id/status', async (req, res) => {
   try {
     const { rowCount } = await query("UPDATE users SET status = $1 WHERE id = $2 AND role = 'client'", [req.body.status, req.params.id]);
     if (rowCount === 0) return res.status(404).json({ code: 404, message: '客户不存在' });
     res.json({ code: 200, message: req.body.status === 'active' ? '已启用' : '已禁用' });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 产品白名单 ====================
 const whitelistCRUD = (path, table) => {
-  router.get(path, async (req, res) => { try { const { rows } = await query(`SELECT * FROM ${table} ORDER BY id`); res.json({ code: 200, data: rows }); } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); } });
+  router.get(path, async (req, res) => { try { const { rows } = await query(`SELECT * FROM ${table} ORDER BY id`); res.json({ code: 200, data: rows }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
   router.post(path, async (req, res) => {
     try {
       const keys = Object.keys(req.body).filter(k => req.body[k] !== undefined);
       const vals = keys.map(k => req.body[k]);
       const { rows: [r] } = await query(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`, vals);
       res.json({ code: 200, message: '创建成功', data: r });
-    } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+    } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
   });
   router.put(`${path}/:id`, async (req, res) => {
     try {
@@ -230,33 +230,33 @@ const whitelistCRUD = (path, table) => {
       const { rows: [r] } = await query(`UPDATE ${table} SET ${fields.join(', ')} WHERE id = $1 RETURNING *`, values);
       if (!r) return res.status(404).json({ code: 404, message: '记录不存在' });
       res.json({ code: 200, message: '更新成功', data: r });
-    } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+    } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
   });
   router.delete(`${path}/:id`, async (req, res) => {
     try { await query(`DELETE FROM ${table} WHERE id = $1`, [req.params.id]); res.json({ code: 200, message: '删除成功' }); }
-    catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+    catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
   });
 };
 whitelistCRUD('/product-whitelist', 'product_whitelist');
 whitelistCRUD('/warehouses', 'warehouses');
 
 // ==================== 资料模板 ====================
-router.get('/doc-templates', async (req, res) => { try { const { rows } = await query('SELECT * FROM doc_templates ORDER BY cargo_type, sort_order'); res.json({ code: 200, data: rows }); } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); } });
+router.get('/doc-templates', async (req, res) => { try { const { rows } = await query('SELECT * FROM doc_templates ORDER BY cargo_type, sort_order'); res.json({ code: 200, data: rows }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
 whitelistCRUD('/doc-templates', 'doc_templates');
 
 // ==================== 审核字段配置 ====================
-router.get('/review-config', async (req, res) => { try { const { rows } = await query('SELECT * FROM review_config ORDER BY step_tab, id'); res.json({ code: 200, data: rows }); } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); } });
+router.get('/review-config', async (req, res) => { try { const { rows } = await query('SELECT * FROM review_config ORDER BY step_tab, id'); res.json({ code: 200, data: rows }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
 router.put('/review-config/:id', async (req, res) => {
   try {
     const { is_enabled } = req.body;
     const { rows: [r] } = await query('UPDATE review_config SET is_enabled = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *', [req.params.id, is_enabled]);
     if (!r) return res.status(404).json({ code: 404, message: '配置不存在' });
     res.json({ code: 200, message: '更新成功', data: r });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 用户通用 ====================
-router.get('/users', async (req, res) => { try { const users = await User.findAll(); res.json({ code: 200, data: users }); } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); } });
+router.get('/users', async (req, res) => { try { const users = await User.findAll(); res.json({ code: 200, data: users }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
 router.post('/users', async (req, res) => {
   try {
     const { username, password, role, email } = req.body;
@@ -267,7 +267,7 @@ router.post('/users', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({ username, password: hash, role, email });
     res.json({ code: 200, message: '创建成功', data: user });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/users/:id', async (req, res) => {
   try {
@@ -282,11 +282,11 @@ router.put('/users/:id', async (req, res) => {
     fields.push('updated_at = CURRENT_TIMESTAMP');
     const result = await query(`UPDATE users SET ${fields.join(', ')} WHERE id = $1 RETURNING id, username, role, email, status, created_at, updated_at`, values);
     res.json({ code: 200, message: '更新成功', data: result.rows[0] });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.delete('/users/:id', async (req, res) => {
   try { const r = await query('DELETE FROM users WHERE id = $1', [req.params.id]); if (r.rowCount === 0) return res.status(404).json({ code: 404, message: '用户不存在' }); res.json({ code: 200, message: '删除成功' }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 货物追踪 ====================
@@ -314,7 +314,7 @@ router.get('/tracking', async (req, res) => {
        WHERE ${where} ORDER BY s.id, s.tracking_status_updated_at DESC NULLS LAST, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
     );
     res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 module.exports = router;

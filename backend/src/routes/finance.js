@@ -28,7 +28,7 @@ router.get('/announcements', async (req, res) => {
     const { query } = require('../db');
     const { rows } = await query("SELECT * FROM announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 5");
     res.json({ code: 200, data: rows });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 公开：价格查询 + 费用预估 + 仓库地址（无需登录） ====================
@@ -47,14 +47,14 @@ router.get('/warehouses', async (req, res) => {
       result = await query('SELECT * FROM warehouses WHERE route IS NULL ORDER BY id LIMIT 1');
     }
     res.json({ code: 200, data: result.rows[0] || null });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 router.post('/client/estimate', async (req, res) => {
   try {
     const data = await Finance.calculateCharges(null, req.body);
     res.json({ code: 200, data });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/client/prices', async (req, res) => {
   try {
@@ -77,7 +77,7 @@ router.get('/client/prices', async (req, res) => {
     }));
 
     res.json({ code: 200, data: { transport, services } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 router.use(auth);
@@ -85,19 +85,19 @@ router.use(auth);
 // ==================== 通用：通知 ====================
 router.get('/notifications', async (req, res) => {
   try { const data = await Finance.getNotifications(req.user.id); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/notifications/unread-count', async (req, res) => {
   try { const count = await Finance.getUnreadCount(req.user.id); res.json({ code: 200, data: { count } }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/notifications/:id/read', async (req, res) => {
   try { await Finance.markRead(req.params.id, req.user.id); res.json({ code: 200, message: 'ok' }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/notifications/read-all', async (req, res) => {
   try { await Finance.markAllRead(req.user.id); res.json({ code: 200, message: 'ok' }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 客户端 ====================
@@ -126,7 +126,7 @@ router.get('/client/tracking', async (req, res) => {
        WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`, params
     );
     res.json({ code: 200, data: paginatedResponse(rows, cnt.count, page, pageSize) });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 我的订单 - 已完成订单（分页+搜索）
@@ -149,7 +149,7 @@ router.get('/client/orders', async (req, res) => {
        WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`, params
     );
     res.json({ code: 200, data: paginatedResponse(rows, cnt.count, page, pageSize) });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 客户端查看海关回传文件
@@ -160,7 +160,7 @@ router.get('/client/orders/:id/customs-docs', async (req, res) => {
     if (!sub || sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权访问' });
     const { rows } = await query('SELECT * FROM customs_documents WHERE submission_id = $1 ORDER BY created_at DESC', [req.params.id]);
     res.json({ code: 200, data: rows });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 客户填写发货信息
@@ -176,7 +176,7 @@ router.put('/client/submissions/:id/shipping-info', async (req, res) => {
     await query('UPDATE submissions SET tracking_company=$1, tracking_number=$2, shipped_at=CURRENT_TIMESTAMP WHERE id=$3',
       [tracking_company, tracking_number, subId]);
     res.json({ code: 200, message: '发货信息已保存', data: { tracking_company, tracking_number, shipped_at: new Date().toISOString() } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 货物追踪 - 状态变更时间线
@@ -227,7 +227,7 @@ router.get('/client/tracking/:id/timeline', async (req, res) => {
     });
 
     res.json({ code: 200, data: { tracking_status: currentStatus, timeline } });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 货物追踪 - 完整详情
@@ -243,7 +243,7 @@ router.get('/client/tracking/:id/detail', async (req, res) => {
     if (!sub || sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权访问' });
 
     res.json({ code: 200, data });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // 客户端首页统计
@@ -265,16 +265,16 @@ router.get('/client/dashboard-stats', async (req, res) => {
       total_spent: parseFloat(totalSpent.rows[0].c),
       balance: parseFloat(wallet.rows[0]?.c || 0),
     }});
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 router.get('/client/wallet', async (req, res) => {
   try { const w = await Finance.getWallet(req.user.id); res.json({ code: 200, data: w }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/client/transactions', async (req, res) => {
   try { const data = await Finance.getTransactions(req.user.id, parseInt(req.query.page) || 1); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/client/deposit', async (req, res) => {
   try {
@@ -283,11 +283,11 @@ router.post('/client/deposit', async (req, res) => {
     const data = await Finance.deposit(req.user.id, parseFloat(amount), description || '在线充值', req.user.id, req.user.username);
     await Finance.createNotification(req.user.id, '充值到账', `您已成功充值 ฿${amount}，当前余额 ฿${data.balance}`, 'success', null, null);
     res.json({ code: 200, message: '充值成功', data });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/client/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 // ==================== 员工端 ====================
@@ -295,7 +295,7 @@ router.use('/employee', role('employee', 'admin'));
 
 router.get('/employee/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/employee/submissions/:id/calculate', async (req, res) => {
   try {
@@ -303,11 +303,11 @@ router.post('/employee/submissions/:id/calculate', async (req, res) => {
     const data = await Finance.calculateCharges(req.params.id, params);
     res.json({ code: 200, data });
   }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/employee/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.updateCharges(req.params.id, req.body.charges || []); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/employee/submissions/:id/check-balance', async (req, res) => {
   try { const data = await Finance.checkBalance(req.params.id); res.json({ code: 200, data }); }
@@ -347,14 +347,14 @@ router.post('/employee/submissions/:id/refund', async (req, res) => {
 router.use('/admin', role('admin'));
 router.get('/admin/price-rules', async (req, res) => {
   try { const rules = await Finance.getPriceRules(); res.json({ code: 200, data: rules }); }
-  catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.put('/admin/price-rules/:id', async (req, res) => {
   try {
     const rule = await Finance.updatePriceRule(req.params.id, req.body, req.user.id, req.user.username);
     if (!rule) return res.status(404).json({ code: 404, message: '规则不存在' });
     res.json({ code: 200, message: '更新成功', data: rule });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/admin/price-rules', async (req, res) => {
   try {
@@ -367,7 +367,7 @@ router.post('/admin/price-rules', async (req, res) => {
       [fee_type, fee_name, unit || 'fixed', unit_price || 0, description || null, route || null]
     );
     res.json({ code: 200, message: '新增成功', data: rule });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.delete('/admin/price-rules/:id', async (req, res) => {
   try {
@@ -375,7 +375,7 @@ router.delete('/admin/price-rules/:id', async (req, res) => {
     const { rowCount } = await query('DELETE FROM price_rules WHERE id = $1', [req.params.id]);
     if (rowCount === 0) return res.status(404).json({ code: 404, message: '规则不存在' });
     res.json({ code: 200, message: '删除成功' });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/admin/deposit', async (req, res) => {
   try {
@@ -384,7 +384,7 @@ router.post('/admin/deposit', async (req, res) => {
     const data = await Finance.deposit(user_id, parseFloat(amount), description, req.user.id, req.user.username);
     await Finance.createNotification(user_id, '充值到账', `管理员已为您充值 ฿${amount}，当前余额 ฿${data.balance}`, 'success', null, null);
     res.json({ code: 200, message: '充值成功', data });
-  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
 module.exports = router;

@@ -8,7 +8,6 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [
     vue(),
-    // Element Plus 组件自动导入
     AutoImport({
       resolvers: [ElementPlusResolver()],
     }),
@@ -29,5 +28,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['all'],
   },
 })
