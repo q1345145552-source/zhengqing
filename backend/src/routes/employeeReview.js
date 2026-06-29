@@ -1,0 +1,197 @@
+const express = require('express');
+const router = express.Router();
+const controller = require('../controllers/employeeReview');
+const auth = require('../middleware/auth');
+const role = require('../middleware/role');
+
+// 员工 + 管理员才能访问
+router.use(auth);
+router.use(role('employee', 'admin'));
+
+const { query } = require('../db');
+
+router.get('/stats', async (req, res) => {
+  try {
+    const [{ rows: [p] }, { rows: [t] }] = await Promise.all([
+      query("SELECT COUNT(*) AS c FROM submissions WHERE status = 'submitted' AND (review_status = 'pending' OR review_status IS NULL)"),
+      query("SELECT COUNT(*) AS c FROM submissions WHERE status = 'submitted' AND review_status = 'approved'"),
+    ]);
+    res.json({ code: 200, data: { pending: parseInt(p.c), to_register: parseInt(t.c) } });
+  } catch (err) {
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+const EmployeeReview = require('../models/employeeReview');
+
+router.get('/submissions', async (req, res) => {
+  try {
+    const filter = req.query.filter || 'pending';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+    const search = (req.query.search || '').trim();
+    const offset = (page - 1) * pageSize;
+
+    let where;
+    if (filter === 'pending') where = `s.status = 'submitted' AND (s.review_status = 'pending' OR s.review_status = 'approved')`;
+    else if (filter === 'all') where = `s.status = 'submitted'`;
+    else where = `s.status = 'submitted' AND s.review_status IN ('approved', 'registered', 'rejected')`;
+
+    if (search) where += ` AND (COALESCE(s.application_no,'') ILIKE '%' || '${search}' || '%' OR u.username ILIKE '%' || '${search}' || '%' OR COALESCE(sp.thai_name,'') ILIKE '%' || '${search}' || '%' OR COALESCE(sp.english_name,'') ILIKE '%' || '${search}' || '%')`;
+
+    const { query } = require('../db');
+    const { rows: [cnt] } = await query(`SELECT COUNT(*) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id WHERE ${where}`);
+    const { rows } = await query(
+      `SELECT s.id, s.user_id, s.current_step, s.status, s.review_status, s.review_comment, s.next_account, s.next_register_status,
+              s.application_no, s.tracking_status, s.tracking_status_updated_at, s.created_at, s.updated_at,
+              u.username AS client_name, COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name
+       FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id
+       WHERE ${where} ORDER BY s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
+    );
+    res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+router.get('/submissions/:id', controller.detail);
+router.put('/submissions/:id/review', controller.review);
+router.put('/submissions/:id/next-register', controller.nextRegister);
+router.put('/submissions/:id/advance-status', controller.advanceStatus);
+
+// 审核记录
+router.get('/review-history', async (req, res) => {
+  try {
+    const filter = req.query.filter || 'all';
+    const data = await EmployeeReview.getReviewHistory(req.user.id, filter);
+    res.json({ code: 200, data });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 订单跟踪（旧接口，保持兼容）
+router.get('/tracking', async (req, res) => {
+  try {
+    const data = await EmployeeReview.getTracking();
+    res.json({ code: 200, data });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 货物追踪列表（审核通过后的申请，支持状态筛选+分页+搜索）
+router.get('/tracking/list', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+    const search = (req.query.search || '').trim();
+    const offset = (page - 1) * pageSize;
+    const statusFilter = parseInt(req.query.status) || 0;
+    let where = `s.review_status IN ('approved', 'registered') AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
+    if (statusFilter >= 1 && statusFilter <= 11) where += ` AND s.tracking_status = ${statusFilter}`;
+    if (search) where += ` AND (COALESCE(s.application_no,'') ILIKE '%${search}%' OR u.username ILIKE '%${search}%' OR COALESCE(sp.thai_name,'') ILIKE '%${search}%' OR COALESCE(sp.english_name,'') ILIKE '%${search}%' OR COALESCE(ccd.company_name,'') ILIKE '%${search}%')`;
+
+    const { rows: [cnt] } = await query(`SELECT COUNT(DISTINCT s.id) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id WHERE ${where}`);
+    const { rows } = await query(
+      `SELECT DISTINCT ON (s.id) s.id, s.application_no, s.tracking_status, s.tracking_status_updated_at, s.review_status, s.updated_at, s.created_at,
+              u.username AS client_name, COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name, COALESCE(sp.tariff_rate, '') AS tariff_rate,
+              COALESCE(ccd.company_name, '') AS company_name,
+              COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) AS total_freight,
+              scl.status AS charge_status, COALESCE(scl.total_amount, 0) AS charged_amount, s.pending_charge, COALESCE(s.pending_charge_amount, 0) AS pending_charge_amount, COALESCE(s.tracking_number,'') AS client_tracking_number
+       FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id
+       LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id
+       LEFT JOIN LATERAL (SELECT status, total_amount FROM submission_charge_logs WHERE submission_id = s.id ORDER BY id DESC LIMIT 1) scl ON true
+       WHERE ${where} ORDER BY s.id, s.tracking_status_updated_at DESC NULLS LAST, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
+    );
+    res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 时间线
+router.get('/submissions/:id/timeline', async (req, res) => {
+  try {
+    const timeline = await EmployeeReview.getTimeline(req.params.id);
+    res.json({ code: 200, data: timeline });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 导出汇总资料
+router.get('/submissions/:id/export', async (req, res) => {
+  try {
+    const data = await EmployeeReview.exportData(req.params.id);
+    if (!data) return res.status(404).json({ code: 404, message: '申请不存在' });
+    res.json({ code: 200, data });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 待扣款列表
+router.get('/pending-charges', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query(
+      `SELECT s.id, s.application_no, s.pending_charge_amount, s.tracking_status,
+              u.username AS client_name,
+              COALESCE(w.balance, 0) AS client_balance
+       FROM submissions s
+       JOIN users u ON s.user_id = u.id
+       LEFT JOIN client_wallets w ON w.user_id = s.user_id
+       WHERE s.pending_charge = true
+       ORDER BY s.updated_at DESC`
+    );
+    res.json({ code: 200, data: rows });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 确认扣款（员工手动重试）
+router.post('/pending-charges/:id/retry', async (req, res) => {
+  try {
+    const Finance = require('../models/finance');
+    const { query } = require('../db');
+    const subId = req.params.id;
+    const { rows: [sub] } = await query('SELECT * FROM submissions WHERE id = $1 AND pending_charge = true', [subId]);
+    if (!sub) return res.status(404).json({ code: 404, message: '未找到待扣款申请' });
+
+    try {
+      await Finance.chargeSubmission(subId, req.user.id, req.user.username);
+      await query('UPDATE submissions SET pending_charge = false, pending_charge_amount = NULL, arrived_at_warehouse = CURRENT_TIMESTAMP, tracking_status = 7, tracking_status_updated_at = CURRENT_TIMESTAMP WHERE id = $1', [subId]);
+
+      const EmployeeReview = require('../models/employeeReview');
+      await EmployeeReview.logReview(subId, req.user.id, 'advance_status', '状态推进: 运输中 → 中国仓库收货（员工确认扣款）');
+
+      const appNo = sub.application_no || `#${subId}`;
+      await Finance.createNotification(sub.user_id, '扣款成功',
+        `您的申请 ${appNo} 已扣款 ${parseFloat(sub.pending_charge_amount || 0).toLocaleString()} ฿，货物已到中国仓库。`, 'success', 'submission', subId);
+
+      res.json({ code: 200, message: '扣款成功，状态已推进到中国仓库收货' });
+    } catch (chargeErr) {
+      res.status(400).json({ code: 400, message: chargeErr.message || '扣款失败，余额仍不足' });
+    }
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 海关回传文件
+router.post('/submissions/:id/customs-docs', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { file_name, file_path, file_type, document_type_label } = req.body;
+    if (!file_name || !file_path) return res.status(400).json({ code: 400, message: '缺少文件信息' });
+    const { rows: [doc] } = await query(
+      `INSERT INTO customs_documents (submission_id, file_name, file_path, file_type, document_type_label, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [req.params.id, file_name, file_path, file_type || 'other', document_type_label || '', req.user.id]
+    );
+    res.json({ code: 200, message: '上传成功', data: doc });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+router.get('/submissions/:id/customs-docs', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query('SELECT * FROM customs_documents WHERE submission_id = $1 ORDER BY created_at DESC', [req.params.id]);
+    res.json({ code: 200, data: rows });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+router.delete('/submissions/:id/customs-docs/:docId', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    await query('DELETE FROM customs_documents WHERE id = $1 AND submission_id = $2', [req.params.docId, req.params.id]);
+    res.json({ code: 200, message: '删除成功' });
+  } catch (err) { res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+module.exports = router;
