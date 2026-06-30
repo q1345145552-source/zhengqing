@@ -104,21 +104,30 @@ function handleCommand(command) {
 </script>
 
 <style lang="scss" scoped>
+// ==========================================
+// 物流行业风格 — 客户端布局
+// ==========================================
+$brand-deep: #0d2137;
+$brand-navy: #132b44;
+
 .client-layout {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f0f2f5;
+  background: linear-gradient(180deg, #f4f6f9 0%, #eef1f5 100%);
 }
 
 .client-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, $brand-deep 0%, $brand-navy 60%, #1a344d 100%);
+  box-shadow: 0 2px 8px rgba(9, 26, 46, 0.25);
   padding: 0 24px;
   height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 
   .header-left {
     display: flex;
@@ -128,7 +137,7 @@ function handleCommand(command) {
     .system-title {
       font-size: 20px;
       font-weight: 700;
-      color: #303133;
+      color: #fff;
       letter-spacing: 1px;
     }
   }
@@ -136,7 +145,20 @@ function handleCommand(command) {
   .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+
+    // 导航按钮样式 — 透明底白字
+    :deep(.el-button) {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.25);
+      color: rgba(255, 255, 255, 0.9);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #fff;
+      }
+    }
 
     .user-info {
       display: flex;
@@ -148,12 +170,12 @@ function handleCommand(command) {
       transition: background 0.2s;
 
       &:hover {
-        background: #f5f7fa;
+        background: rgba(255, 255, 255, 0.1);
       }
 
       .username {
         font-size: 14px;
-        color: #606266;
+        color: rgba(255, 255, 255, 0.9);
       }
     }
   }
@@ -173,6 +195,6 @@ function handleCommand(command) {
   font-size: 13px;
   padding: 16px;
   background: #fff;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid #e8ecf0;
 }
 </style>

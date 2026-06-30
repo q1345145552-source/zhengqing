@@ -108,37 +108,105 @@ async function handleLogin() {
 </script>
 
 <style lang="scss" scoped>
+// ==========================================
+// 物流行业风格登录页
+// ==========================================
+
+$brand-deep: #0d2137;
+$brand-navy: #132b44;
+$brand-ocean: #1a5276;
+$brand-teal: #1f6f8b;
+
 .login-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0c2d4e 0%, #1a5276 30%, #1f6f8b 60%, #2d98b9 100%);
+  // 深海蓝渐变基底
+  background: linear-gradient(160deg, #091a2e 0%, $brand-deep 25%, $brand-navy 50%, #162d45 75%, #0f2840 100%);
   position: relative;
   overflow: hidden;
 
+  // === 航线网格（物流路线图抽象图案） ===
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
+    opacity: 0.12;
+    background-image:
+      // 水平航线
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 59px,
+        rgba(100, 180, 220, 0.4) 59px,
+        rgba(100, 180, 220, 0.4) 60px
+      ),
+      // 垂直航线
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 59px,
+        rgba(100, 180, 220, 0.4) 59px,
+        rgba(100, 180, 220, 0.4) 60px
+      ),
+      // 斜向路线（45度，模拟航线交叉）
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 83px,
+        rgba(80, 160, 200, 0.25) 83px,
+        rgba(80, 160, 200, 0.25) 84px
+      ),
+      // 反向斜线
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 83px,
+        rgba(80, 160, 200, 0.25) 83px,
+        rgba(80, 160, 200, 0.25) 84px
+      );
+  }
+
+  // === 光晕点缀 ===
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
     background:
-      radial-gradient(ellipse at 20% 80%, rgba(41,128,185,0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(52,152,219,0.1) 0%, transparent 50%);
+      // 左上角大光晕 — 模拟港口灯光
+      radial-gradient(ellipse 600px 400px at 15% 10%, rgba(41, 128, 185, 0.18) 0%, transparent 70%),
+      // 右下角光晕 — 模拟航线终点
+      radial-gradient(ellipse 500px 350px at 85% 90%, rgba(26, 188, 156, 0.12) 0%, transparent 70%),
+      // 中心微光
+      radial-gradient(circle 300px at 50% 40%, rgba(52, 152, 219, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  // === 浮动集装箱方块装饰 ===
+  .container-block {
+    position: absolute;
+    border: 1.5px solid rgba(100, 180, 220, 0.3);
+    border-radius: 3px;
+    background: rgba(20, 60, 100, 0.15);
+    pointer-events: none;
   }
 }
 
 .login-card {
   position: relative;
+  z-index: 10;
   width: 420px;
   padding: 48px 40px 36px;
   background: rgba(255, 255, 255, 0.97);
   border-radius: 16px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 24px 80px rgba(9, 26, 46, 0.35);
   backdrop-filter: blur(10px);
+  // 顶部品牌色条
+  border-top: 4px solid $brand-navy;
 
   .login-logo {
     text-align: center;
@@ -150,17 +218,17 @@ async function handleLogin() {
       justify-content: center;
       width: 88px;
       height: 88px;
-      background: linear-gradient(135deg, #1a5276, #2d98b9);
+      background: linear-gradient(135deg, #0d2137, #1a5276, #1f6f8b);
       border-radius: 50%;
       color: #fff;
       margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(26, 82, 118, 0.3);
+      box-shadow: 0 8px 24px rgba(13, 33, 55, 0.35);
     }
 
     .system-name {
       font-size: 30px;
       font-weight: 800;
-      color: #1a3c52;
+      color: #0d2137;
       margin: 0 0 6px;
       letter-spacing: 4px;
     }
@@ -179,10 +247,14 @@ async function handleLogin() {
       height: 48px;
       font-size: 16px;
       letter-spacing: 8px;
-      background: linear-gradient(135deg, #1a5276, #2d98b9);
+      background: linear-gradient(135deg, #0d2137, #1a5276);
       border: none;
+      border-radius: 8px;
+      transition: all 0.3s;
       &:hover {
-        background: linear-gradient(135deg, #154360, #2471a3);
+        background: linear-gradient(135deg, #132b44, #1f6f8b);
+        box-shadow: 0 4px 16px rgba(13, 33, 55, 0.4);
+        transform: translateY(-1px);
       }
     }
   }
@@ -194,18 +266,19 @@ async function handleLogin() {
     color: #909399;
 
     a {
-      color: #2d98b9;
+      color: #1a5276;
       font-weight: 600;
       text-decoration: none;
-      &:hover { color: #1a5276; }
+      &:hover { color: #0d2137; }
     }
   }
 }
 
 .login-footer {
   position: relative;
+  z-index: 10;
   margin-top: 32px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
 }
 </style>

@@ -10,9 +10,9 @@
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
+        background-color="transparent"
+        text-color="#b0bec5"
+        active-text-color="#4fc3f7"
         router
       >
         <el-menu-item index="/employee/dashboard">
@@ -147,6 +147,11 @@ function handleCommand(command) {
 </script>
 
 <style lang="scss" scoped>
+// ==========================================
+// 物流行业风格 — 员工工作台布局
+// ==========================================
+$brand-deep: #0d2137;
+
 .employee-layout {
   display: flex;
   height: 100vh;
@@ -154,9 +159,10 @@ function handleCommand(command) {
 }
 
 .employee-sidebar {
-  background: #304156;
+  background: linear-gradient(180deg, #0a1a2e 0%, $brand-deep 40%, #12273d 100%);
   transition: width 0.3s;
   overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 
   .sidebar-logo {
     height: 60px;
@@ -164,13 +170,15 @@ function handleCommand(command) {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.15);
 
     .logo-text {
       color: #fff;
       font-size: 16px;
       font-weight: 600;
       white-space: nowrap;
+      letter-spacing: 1px;
     }
   }
 
@@ -191,9 +199,11 @@ function handleCommand(command) {
   justify-content: space-between;
   align-items: center;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   padding: 0 20px;
   height: 50px;
+  border-bottom: 1px solid #e8ecf0;
+  z-index: 10;
 
   .topbar-left {
     display: flex;
@@ -227,7 +237,7 @@ function handleCommand(command) {
 .employee-main {
   flex: 1;
   overflow-y: auto;
-  background: #f0f2f5;
+  background: linear-gradient(180deg, #f4f6f9 0%, #eef1f5 100%);
   padding: 20px;
 }
 </style>

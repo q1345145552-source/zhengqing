@@ -1,6 +1,13 @@
 /* ========================================
-   正清系统 - 全局样式
+   湘泰出海系统 - 物流行业风格全局样式
    ======================================== */
+
+// ========== 品牌色系统 ==========
+// 主色：深海军蓝
+// 辅色：海蓝
+// 强调色：青蓝
+// 背景：浅灰蓝
+// 文字：深灰
 
 /* 全局重置 */
 *,
@@ -17,17 +24,17 @@ html, body {
     'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
   font-size: 14px;
   color: #303133;
-  background: #f0f2f5;
+  background: #f4f6f9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  color: #409EFF;
+  color: #1a5276;
   text-decoration: none;
 
   &:hover {
-    color: #66b1ff;
+    color: #0d2137;
   }
 }
 
@@ -50,21 +57,74 @@ a {
   }
 }
 
-/* Element Plus 覆盖 */
-.el-card {
-  border-radius: 8px;
+/* ========== Element Plus 物流风格覆盖 ========== */
+
+// 主色调改为深海军蓝
+:root {
+  --el-color-primary: #1a5276;
+  --el-color-primary-light-3: #2d6a8f;
+  --el-color-primary-light-5: #4a8ab0;
+  --el-color-primary-light-7: #7fb3d0;
+  --el-color-primary-light-8: #a8d0e5;
+  --el-color-primary-light-9: #d4e8f5;
+  --el-color-primary-dark-2: #0d2137;
 }
 
+// 卡片圆角加大，阴影减轻
+.el-card {
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e8ecf0;
+}
+
+// 按钮风格
 .el-button {
   border-radius: 6px;
+  font-weight: 500;
+
+  &.el-button--primary {
+    --el-button-bg-color: #1a5276;
+    --el-button-border-color: #1a5276;
+    --el-button-hover-bg-color: #0d2137;
+    --el-button-hover-border-color: #0d2137;
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(13, 33, 55, 0.3);
+    }
+  }
 }
 
+// 菜单项激活态
 .el-menu {
   .el-menu-item {
     &.is-active {
-      background-color: rgba(64, 158, 255, 0.1) !important;
+      background-color: rgba(79, 195, 247, 0.12) !important;
+      border-right: 3px solid #4fc3f7;
     }
   }
+}
+
+// 表格
+.el-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// 标签
+.el-tag {
+  border-radius: 4px;
+}
+
+// 分页
+.el-pagination {
+  .el-pager li.is-active {
+    background-color: #1a5276;
+  }
+}
+
+// 输入框聚焦色
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px #1a5276 inset;
 }
 
 /* 通用工具类 */
