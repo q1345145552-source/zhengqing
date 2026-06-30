@@ -219,17 +219,32 @@ const Submission = {
   },
 
   /**
-   * 获取某用户的所有提交列表
+   * 获取某用户的提交列表（支持分页+搜索）
    */
-  async findByUser(userId) {
-    const result = await query(
-      `SELECT id, application_no, current_step, status, review_status, review_comment,
-              next_account, next_register_status, tracking_status, created_at, updated_at
-       FROM submissions WHERE user_id = $1
-       ORDER BY updated_at DESC`,
-      [userId]
-    );
-    return result.rows;
+  async findByUser(userId, { page = 1, pageSize = 10, search = '' } = {}) {
+    const params = [userId];
+    let where = 'user_id = $1';
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (COALESCE(application_no,'') ILIKE $${params.length})`;
+    }
+
+    const offset = (page - 1) * pageSize;
+
+    const [{ rows: [cnt] }, { rows }] = await Promise.all([
+      query(`SELECT COUNT(*) FROM submissions WHERE ${where}`, params),
+      query(
+        `SELECT id, application_no, current_step, status, review_status, review_comment,
+                next_account, next_register_status, tracking_status, created_at, updated_at
+         FROM submissions WHERE ${where}
+         ORDER BY updated_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, pageSize, offset]
+      ),
+    ]);
+
+    return { list: rows, total: parseInt(cnt.count), page, pageSize };
   },
 
   /**

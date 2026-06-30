@@ -16,6 +16,16 @@
       </template></el-table-column>
     </el-table>
 
+    <el-pagination
+      v-if="total > pageSize"
+      v-model:current-page="page"
+      :page-size="pageSize"
+      :total="total"
+      layout="total, prev, pager, next"
+      @current-change="load"
+      style="margin-top:16px;justify-content:flex-end"
+    />
+
     <el-dialog v-model="show" :title="editing?'编辑员工':'新增员工'" width="450px" destroy-on-close>
       <el-form :model="form" label-width="80px">
         <el-form-item label="用户名" required><el-input v-model="form.username" placeholder="登录用户名" /></el-form-item>
@@ -35,10 +45,11 @@ import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const list = ref([]); const loading = ref(false); const show = ref(false); const editing = ref(null); const saving = ref(false); const genPwd = ref('')
+const page = ref(1); const pageSize = ref(10); const total = ref(0)
 const form = reactive({ username: '', real_name: '', email: '', password: '' })
 
 onMounted(load)
-async function load() { loading.value = true; try { const res = await request.get('/admin/employees'); list.value = res.data || [] } catch { /* */ } finally { loading.value = false } }
+async function load() { loading.value = true; try { const res = await request.get('/admin/employees', { params: { page: page.value, pageSize: pageSize.value } }); list.value = res.data.list || []; total.value = res.data.total || 0 } catch { /* */ } finally { loading.value = false } }
 function openDialog(row) {
   editing.value = row; genPwd.value = ''
   if (row) { form.username = row.username; form.real_name = row.real_name || ''; form.email = row.email || ''; form.password = '' }

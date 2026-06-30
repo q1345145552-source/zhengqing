@@ -16,6 +16,16 @@
         </el-popconfirm>
       </template></el-table-column>
     </el-table>
+
+    <el-pagination
+      v-if="total > pageSize"
+      v-model:current-page="page"
+      :page-size="pageSize"
+      :total="total"
+      layout="total, prev, pager, next"
+      @current-change="load"
+      style="margin-top:16px;justify-content:flex-end"
+    />
   </div>
 </template>
 
@@ -24,9 +34,9 @@ import { ref, onMounted } from 'vue'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
-const list = ref([]); const loading = ref(false)
+const list = ref([]); const loading = ref(false); const page = ref(1); const pageSize = ref(10); const total = ref(0)
 onMounted(load)
-async function load() { loading.value = true; try { const res = await request.get('/admin/customers'); list.value = res.data || [] } catch { /* */ } finally { loading.value = false } }
+async function load() { loading.value = true; try { const res = await request.get('/admin/customers', { params: { page: page.value, pageSize: pageSize.value } }); list.value = res.data.list || []; total.value = res.data.total || 0 } catch { /* */ } finally { loading.value = false } }
 async function toggleStatus(row) {
   const ns = row.status === 'active' ? 'disabled' : 'active'
   try { await request.put(`/admin/customers/${row.id}/status`, { status: ns }); row.status = ns; ElMessage.success(ns === 'active' ? '已启用' : '已禁用') } catch { /* */ }

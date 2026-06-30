@@ -108,12 +108,16 @@ router.get('/client/tracking', async (req, res) => {
   try {
     const { query } = require('../db');
     const { page, pageSize, search, offset } = paginate(req);
-    const baseWhere = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
-    const searchSQL = search ? ` AND (COALESCE(s.application_no,'') ILIKE $2 OR COALESCE(sp.thai_name,'') ILIKE $2 OR COALESCE(sp.english_name,'') ILIKE $2 OR COALESCE(ccd.company_name,'') ILIKE $2)` : '';
-    const where = baseWhere + searchSQL;
-    const params = search ? [req.user.id, `%${search}%`] : [req.user.id];
+    const params = [req.user.id];
+    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length} OR COALESCE(ccd.company_name,'') ILIKE $${params.length})`;
+    }
 
     const { rows: [cnt] } = await query(`SELECT COUNT(DISTINCT s.id) FROM submissions s LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id WHERE ${where}`, params);
+    const allParams = [...params, pageSize, offset];
     const { rows } = await query(
       `SELECT DISTINCT ON (s.id) s.id, s.application_no, s.tracking_status, s.tracking_status_updated_at, s.review_status, s.created_at, s.updated_at,
               COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name, COALESCE(sp.tariff_rate, '') AS tariff_rate,
@@ -123,7 +127,7 @@ router.get('/client/tracking', async (req, res) => {
               s.pending_charge, COALESCE(s.pending_charge_amount, 0) AS pending_charge_amount
        FROM submissions s LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id
        LEFT JOIN LATERAL (SELECT status, total_amount FROM submission_charge_logs WHERE submission_id = s.id ORDER BY id DESC LIMIT 1) scl ON true
-       WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`, params
+       WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`, allParams
     );
     res.json({ code: 200, data: paginatedResponse(rows, cnt.count, page, pageSize) });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
@@ -134,19 +138,23 @@ router.get('/client/orders', async (req, res) => {
   try {
     const { query } = require('../db');
     const { page, pageSize, search, offset } = paginate(req);
-    const baseWhere = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status = 11`;
-    const searchSQL = search ? ` AND (COALESCE(s.application_no,'') ILIKE $2 OR COALESCE(sp.thai_name,'') ILIKE $2 OR COALESCE(sp.english_name,'') ILIKE $2 OR COALESCE(ccd.company_name,'') ILIKE $2)` : '';
-    const where = baseWhere + searchSQL;
-    const params = search ? [req.user.id, `%${search}%`] : [req.user.id];
+    const params = [req.user.id];
+    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status = 11`;
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length} OR COALESCE(ccd.company_name,'') ILIKE $${params.length})`;
+    }
 
     const { rows: [cnt] } = await query(`SELECT COUNT(DISTINCT s.id) FROM submissions s LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id WHERE ${where}`, params);
+    const allParams = [...params, pageSize, offset];
     const { rows } = await query(
       `SELECT DISTINCT ON (s.id) s.id, s.application_no, s.tracking_status, s.tracking_status_updated_at, s.review_status, s.created_at, s.updated_at,
               COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name, COALESCE(sp.tariff_rate, '') AS tariff_rate,
               COALESCE(ccd.company_name, '') AS company_name,
               COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) AS total_freight
        FROM submissions s LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id
-       WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`, params
+       WHERE ${where} ORDER BY s.id, s.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`, allParams
     );
     res.json({ code: 200, data: paginatedResponse(rows, cnt.count, page, pageSize) });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
@@ -368,7 +376,7 @@ router.put('/employee/submissions/:id/charges', async (req, res) => {
 });
 router.get('/employee/submissions/:id/check-balance', async (req, res) => {
   try { const data = await Finance.checkBalance(req.params.id); res.json({ code: 200, data }); }
-  catch (err) { res.status(500).json({ code: 500, message: err.message }); }
+  catch (err) { console.error('[Finance] check-balance error:', err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
 });
 // Fix 3: 标记货物到仓 + 自动扣款
 router.put('/employee/submissions/:id/mark-arrived', async (req, res) => {
@@ -423,6 +431,8 @@ router.post('/admin/price-rules', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING *`,
       [fee_type, fee_name, unit || 'fixed', unit_price || 0, description || null, route || null]
     );
+    // 清除价格规则缓存
+    require('../utils/cache').del('price_rules');
     res.json({ code: 200, message: '新增成功', data: rule });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
@@ -431,6 +441,8 @@ router.delete('/admin/price-rules/:id', async (req, res) => {
     const { query } = require('../db');
     const { rowCount } = await query('DELETE FROM price_rules WHERE id = $1', [req.params.id]);
     if (rowCount === 0) return res.status(404).json({ code: 404, message: '规则不存在' });
+    // 清除价格规则缓存
+    require('../utils/cache').del('price_rules');
     res.json({ code: 200, message: '删除成功' });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });

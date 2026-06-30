@@ -1,4 +1,8 @@
 const { query } = require('../db');
+const cache = require('../utils/cache');
+
+const PRICE_RULES_CACHE_KEY = 'price_rules';
+const PRICE_RULES_CACHE_TTL = 10 * 60 * 1000; // 价格规则缓存 10 分钟
 
 const Finance = {
   // ========== 钱包 ==========
@@ -33,13 +37,20 @@ const Finance = {
     return { list: rows, total: parseInt(cnt.count) };
   },
 
-  // ========== 价格规则 (Fix 1: 路线分层) ==========
+  // ========== 价格规则 (带缓存) ==========
   async getPriceRules() {
+    // 优先从缓存读取
+    const cached = cache.get(PRICE_RULES_CACHE_KEY);
+    if (cached) return cached;
+
     const { rows } = await query('SELECT * FROM price_rules ORDER BY id');
+    cache.set(PRICE_RULES_CACHE_KEY, rows, PRICE_RULES_CACHE_TTL);
     return rows;
   },
 
   async updatePriceRule(id, data, operatorId, operatorName) {
+    // 修改价格规则时清除缓存
+    cache.del(PRICE_RULES_CACHE_KEY);
     const fields = []; const values = [id]; let idx = 2;
     if (data.unit_price !== undefined) { fields.push(`unit_price = $${idx++}`); values.push(data.unit_price); }
     if (data.is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(data.is_active); }

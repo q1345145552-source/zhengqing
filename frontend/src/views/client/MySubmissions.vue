@@ -13,7 +13,7 @@
 
     <!-- 申请卡片列表 -->
     <div v-loading="loading" class="card-list">
-      <el-empty v-if="filteredList.length === 0" :description="$t('client.submissions.empty')">
+      <el-empty v-if="!loading && filteredList.length === 0" description="暂无申请记录">
         <el-button type="primary" @click="$router.push('/client/upload')">去提交申请</el-button>
       </el-empty>
 
@@ -58,6 +58,16 @@
         </div>
       </div>
     </div>
+
+    <el-pagination
+      v-if="total > pageSize"
+      v-model:current-page="page"
+      :page-size="pageSize"
+      :total="total"
+      layout="total, prev, pager, next"
+      @current-change="loadList"
+      style="margin-top:16px;justify-content:center"
+    />
 
     <!-- 详情弹窗 -->
     <el-dialog v-model="showDetail" title="申请详情" width="720px" :close-on-click-modal="false">
@@ -126,6 +136,9 @@ const detailData = ref(null)
 const chargeItems = ref([])
 const chargeTotal = ref(0)
 const chargeLog = ref(null)
+const page = ref(1)
+const total = ref(0)
+const pageSize = ref(10)
 
 const filteredList = computed(() => {
   if (filter.value === 'all') return list.value
@@ -138,8 +151,9 @@ onMounted(() => loadList())
 async function loadList() {
   loading.value = true
   try {
-    const res = await getMySubmissions()
-    list.value = res.data || []
+    const res = await getMySubmissions({ page: page.value, pageSize: pageSize.value })
+    list.value = res.data.list || []
+    total.value = res.data.total || 0
   } catch { /* handled */ }
   finally { loading.value = false }
 }

@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const compression = require('compression');
 const config = require('./config');
 
 const path = require('path');
@@ -19,6 +20,12 @@ const app = express();
 
 // ---------- 全局中间件 ----------
 
+// Gzip/br 压缩（减少响应体积，通常可减少 60-80%）
+app.use(compression({
+  // 仅压缩大于 1KB 的响应
+  threshold: 1024,
+}));
+
 // CORS 跨域
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:4173'],
@@ -27,6 +34,18 @@ app.use(cors({
 
 // 请求日志
 app.use(morgan('dev'));
+
+// 慢查询监控：记录超过 500ms 的请求
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (duration > 500) {
+      console.warn(`[SLOW] ${req.method} ${req.originalUrl} — ${duration}ms`);
+    }
+  });
+  next();
+});
 
 // 解析 JSON 请求体
 app.use(express.json());

@@ -5,6 +5,17 @@
       <el-button type="primary" @click="openDialog(null)"><el-icon><Plus /></el-icon> 新增用户</el-button>
     </div>
 
+    <div class="toolbar">
+      <el-input v-model="searchText" placeholder="搜索用户名/邮箱" clearable style="width:240px" @clear="loadUsers" @keyup.enter="loadUsers">
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
+      <el-select v-model="roleFilter" placeholder="角色筛选" clearable style="width:140px" @change="loadUsers">
+        <el-option label="管理员" value="admin" />
+        <el-option label="员工" value="employee" />
+        <el-option label="客户" value="client" />
+      </el-select>
+    </div>
+
     <el-table :data="users" stripe v-loading="loading" empty-text="暂无用户">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="username" label="用户名" width="130" />
@@ -38,6 +49,16 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+      v-if="total > pageSize"
+      v-model:current-page="page"
+      :page-size="pageSize"
+      :total="total"
+      layout="total, prev, pager, next"
+      @current-change="loadUsers"
+      style="margin-top:16px;justify-content:flex-end"
+    />
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="show" :title="editing ? '编辑用户' : '新增用户'" width="480px" destroy-on-close>
@@ -81,6 +102,11 @@ const show = ref(false)
 const editing = ref(null)
 const saving = ref(false)
 const formRef = ref(null)
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const searchText = ref('')
+const roleFilter = ref('')
 
 const form = reactive({ username: '', password: '', role: 'client', email: '', status: 'active' })
 const rules = {
@@ -92,7 +118,14 @@ const rules = {
 onMounted(loadUsers)
 async function loadUsers() {
   loading.value = true
-  try { const res = await request.get('/admin/users'); users.value = res.data || [] }
+  try {
+    const params = { page: page.value, pageSize: pageSize.value }
+    if (searchText.value) params.search = searchText.value
+    if (roleFilter.value) params.role = roleFilter.value
+    const res = await request.get('/admin/users', { params })
+    users.value = res.data.list || []
+    total.value = res.data.total || 0
+  }
   catch { /* handled */ }
   finally { loading.value = false }
 }

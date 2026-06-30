@@ -54,10 +54,10 @@ export function submitSubmission(id) {
 }
 
 /**
- * 获取我的提交列表（含审核状态）
+ * 获取我的提交列表（含审核状态，支持分页+搜索）
  */
-export function getMySubmissions() {
-  return request.get('/submissions')
+export function getMySubmissions(params = {}) {
+  return request.get('/submissions', { params })
 }
 
 /**

@@ -34,13 +34,35 @@ const User = {
   },
 
   /**
-   * 查询所有用户（管理员使用）
+   * 查询用户列表（管理员使用，支持分页+搜索）
    */
-  async findAll() {
-    const result = await query(
-      'SELECT id, username, role, email, status, created_at, updated_at FROM users ORDER BY id'
-    );
-    return result.rows;
+  async findAll({ page = 1, pageSize = 10, search = '', role = '' } = {}) {
+    const params = [];
+    const conditions = [];
+
+    if (role) {
+      params.push(role);
+      conditions.push(`role = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      conditions.push(`(username ILIKE $${params.length} OR email ILIKE $${params.length})`);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const offset = (page - 1) * pageSize;
+
+    const [{ rows: [cnt] }, { rows }] = await Promise.all([
+      query(`SELECT COUNT(*) FROM users ${where}`, params),
+      query(
+        `SELECT id, username, role, email, status, created_at, updated_at
+         FROM users ${where} ORDER BY id
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, pageSize, offset]
+      ),
+    ]);
+
+    return { list: rows, total: parseInt(cnt.count), page, pageSize };
   },
 };
 

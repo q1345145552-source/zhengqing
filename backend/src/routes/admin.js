@@ -154,20 +154,25 @@ router.get('/submissions', async (req, res) => {
     const search = (req.query.search || '').trim();
     const offset = (page - 1) * pageSize;
 
+    const params = [];
     let where;
     if (filter === 'pending') where = `s.status = 'submitted' AND (s.review_status = 'pending' OR s.review_status = 'approved')`;
     else if (filter === 'all') where = `s.status = 'submitted'`;
     else where = `s.status = 'submitted' AND s.review_status IN ('approved', 'registered', 'rejected')`;
 
-    if (search) where += ` AND (COALESCE(s.application_no,'') ILIKE '%${search}%' OR u.username ILIKE '%${search}%' OR COALESCE(sp.thai_name,'') ILIKE '%${search}%' OR COALESCE(sp.english_name,'') ILIKE '%${search}%')`;
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR u.username ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length})`;
+    }
 
-    const { rows: [cnt] } = await query(`SELECT COUNT(*) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id WHERE ${where}`);
+    const { rows: [cnt] } = await query(`SELECT COUNT(*) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id WHERE ${where}`, params);
+    const allParams = [...params, pageSize, offset];
     const { rows } = await query(
       `SELECT s.id, s.user_id, s.current_step, s.status, s.review_status, s.review_comment, s.next_account, s.next_register_status,
               s.application_no, s.tracking_status, s.tracking_status_updated_at, s.created_at, s.updated_at,
               u.username AS client_name, COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name
        FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id
-       WHERE ${where} ORDER BY s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
+       WHERE ${where} ORDER BY s.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`, allParams
     );
     res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
@@ -179,7 +184,23 @@ router.get('/submissions/:id', async (req, res) => {
 
 // ==================== 员工管理 ====================
 router.get('/employees', async (req, res) => {
-  try { const { rows } = await query("SELECT id, username, real_name, email, role, status, created_at, updated_at FROM users WHERE role = 'employee' ORDER BY id"); res.json({ code: 200, data: rows }); }
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+    const search = (req.query.search || '').trim();
+    const params = [];
+    let where = `role = 'employee'`;
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (username ILIKE $${params.length} OR COALESCE(real_name,'') ILIKE $${params.length})`;
+    }
+    const offset = (page - 1) * pageSize;
+    const [{ rows: [cnt] }, { rows }] = await Promise.all([
+      query(`SELECT COUNT(*) FROM users WHERE ${where}`, params),
+      query(`SELECT id, username, real_name, email, role, status, created_at, updated_at FROM users WHERE ${where} ORDER BY id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`, [...params, pageSize, offset]),
+    ]);
+    res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
+  }
   catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.post('/employees', async (req, res) => {
@@ -221,12 +242,27 @@ router.put('/employees/:id/status', async (req, res) => {
 // ==================== 客户管理 ====================
 router.get('/customers', async (req, res) => {
   try {
-    const { rows } = await query(
-      `SELECT u.id, u.username, u.real_name, u.email, u.status, u.created_at,
-              (SELECT COUNT(*) FROM submissions WHERE user_id = u.id) AS total_submissions
-       FROM users u WHERE u.role = 'client' ORDER BY u.id`
-    );
-    res.json({ code: 200, data: rows });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+    const search = (req.query.search || '').trim();
+    const params = [];
+    let where = `u.role = 'client'`;
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (u.username ILIKE $${params.length} OR COALESCE(u.real_name,'') ILIKE $${params.length} OR COALESCE(u.email,'') ILIKE $${params.length})`;
+    }
+    const offset = (page - 1) * pageSize;
+    const [{ rows: [cnt] }, { rows }] = await Promise.all([
+      query(`SELECT COUNT(*) FROM users u WHERE ${where}`, params),
+      query(
+        `SELECT u.id, u.username, u.real_name, u.email, u.status, u.created_at,
+                (SELECT COUNT(*) FROM submissions WHERE user_id = u.id) AS total_submissions
+         FROM users u WHERE ${where} ORDER BY u.id
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, pageSize, offset]
+      ),
+    ]);
+    res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 router.get('/customers/:id', async (req, res) => {
@@ -301,7 +337,16 @@ router.put('/review-config/:id', async (req, res) => {
 });
 
 // ==================== 用户通用 ====================
-router.get('/users', async (req, res) => { try { const users = await User.findAll(); res.json({ code: 200, data: users }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
+router.get('/users', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+    const search = (req.query.search || '').trim();
+    const role = req.query.role || '';
+    const data = await User.findAll({ page, pageSize, search, role });
+    res.json({ code: 200, data });
+  } catch (err) { console.error('[Admin] users error:', err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
+});
 router.post('/users', async (req, res) => {
   try {
     const { username, password, role, email } = req.body;
@@ -342,11 +387,16 @@ router.get('/tracking', async (req, res) => {
     const search = (req.query.search || '').trim();
     const offset = (page - 1) * pageSize;
     const statusFilter = parseInt(req.query.status) || 0;
+    const params = [];
     let where = `s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
     if (statusFilter >= 1 && statusFilter <= 11) where += ` AND s.tracking_status = ${statusFilter}`;
-    if (search) where += ` AND (COALESCE(s.application_no,'') ILIKE '%${search}%' OR u.username ILIKE '%${search}%' OR COALESCE(sp.thai_name,'') ILIKE '%${search}%' OR COALESCE(sp.english_name,'') ILIKE '%${search}%' OR COALESCE(ccd.company_name,'') ILIKE '%${search}%')`;
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR u.username ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length} OR COALESCE(ccd.company_name,'') ILIKE $${params.length})`;
+    }
 
-    const { rows: [cnt] } = await query(`SELECT COUNT(DISTINCT s.id) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id WHERE ${where}`);
+    const { rows: [cnt] } = await query(`SELECT COUNT(DISTINCT s.id) FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id WHERE ${where}`, params);
+    const allParams = [...params, pageSize, offset];
     const { rows } = await query(
       `SELECT DISTINCT ON (s.id) s.id, s.application_no, s.tracking_status, s.tracking_status_updated_at, s.review_status, s.updated_at, s.created_at,
               u.username AS client_name, COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name, COALESCE(sp.tariff_rate, '') AS tariff_rate,
@@ -356,7 +406,7 @@ router.get('/tracking', async (req, res) => {
        FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id
        LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id
        LEFT JOIN LATERAL (SELECT status, total_amount FROM submission_charge_logs WHERE submission_id = s.id ORDER BY id DESC LIMIT 1) scl ON true
-       WHERE ${where} ORDER BY s.id, s.tracking_status_updated_at DESC NULLS LAST, s.updated_at DESC LIMIT ${pageSize} OFFSET ${offset}`
+       WHERE ${where} ORDER BY s.id, s.tracking_status_updated_at DESC NULLS LAST, s.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`, allParams
     );
     res.json({ code: 200, data: { list: rows, total: parseInt(cnt.count), page, pageSize } });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }

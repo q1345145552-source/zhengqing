@@ -186,12 +186,15 @@ const submissionController = {
 
   /**
    * GET /api/submissions
-   * 客户获取自己的提交列表（含审核状态）
+   * 客户获取自己的提交列表（支持分页+搜索）
    */
   async list(req, res) {
     try {
-      const list = await Submission.findByUser(req.user.id);
-      return res.json({ code: 200, message: 'ok', data: list });
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 10));
+      const search = (req.query.search || '').trim();
+      const data = await Submission.findByUser(req.user.id, { page, pageSize, search });
+      return res.json({ code: 200, message: 'ok', data });
     } catch (err) {
       console.error('[Submission] List error:', err);
       var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
