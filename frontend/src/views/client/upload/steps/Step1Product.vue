@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { uploadFile } from '@/api/submission'
 import { ElMessage } from 'element-plus'
 
@@ -149,6 +149,22 @@ onMounted(() => {
   }))
   form.product_images = images
 })
+
+// 监听 formData 变化，切换回来时恢复数据
+watch(() => props.formData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+  if (newVal.thai_name !== undefined) form.thai_name = newVal.thai_name || ''
+  if (newVal.english_name !== undefined) form.english_name = newVal.english_name || ''
+  if (newVal.product_images !== undefined) {
+    form.product_images = newVal.product_images
+    fileList.value = newVal.product_images.map((img, i) => ({
+      uid: i,
+      name: img.original_name || img.filename || `image_${i}`,
+      url: img.url || imageUrl(img.stored_path || img.path || ''),
+      status: 'success',
+    }))
+  }
+}, { deep: true, immediate: false })
 
 function beforeUpload(file) {
   const isImage = file.type.startsWith('image/')

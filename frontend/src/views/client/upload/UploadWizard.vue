@@ -190,6 +190,11 @@ async function nextStep() {
 
 async function prevStep() {
   if (currentStep.value > 1) {
+    // 回退前先保存当前步骤（不调用后端，只更新缓存）
+    if (currentStepRef && currentStepRef.getFormData) {
+      const data = currentStepRef.getFormData()
+      allStepData.value[currentStep.value] = { ...data }
+    }
     currentStep.value--
     loadStepData()
   }

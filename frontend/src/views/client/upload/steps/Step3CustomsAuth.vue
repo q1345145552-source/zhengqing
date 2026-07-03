@@ -144,7 +144,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { uploadFile } from '@/api/submission'
 import { getCustomsAuths } from '@/api/clientProfile'
 import { ElMessage } from 'element-plus'
@@ -155,6 +155,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update'])
 
+const formRef = ref(null)
 const uploading = ref(false)
 const savedAuths = ref([])
 const selectedAuthId = ref(null)
@@ -179,6 +180,16 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 })
+
+// 监听 formData 变化，切换回来时恢复数据
+watch(() => props.formData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+  if (newVal.handler_type !== undefined) form.handler_type = newVal.handler_type || 'director'
+  if (newVal.power_of_attorney_file !== undefined) form.power_of_attorney_file = newVal.power_of_attorney_file
+  if (newVal.pp20_signed_file !== undefined) form.pp20_signed_file = newVal.pp20_signed_file
+  if (newVal.dbd_signed_file !== undefined) form.dbd_signed_file = newVal.dbd_signed_file
+  if (newVal.has_director_passport_original !== undefined) form.has_director_passport_original = newVal.has_director_passport_original
+}, { deep: true, immediate: false })
 
 function onSelectAuth(id) {
   if (id === 0) {

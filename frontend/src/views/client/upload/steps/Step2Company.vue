@@ -144,7 +144,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { uploadFile } from '@/api/submission'
 import { getCompanyDocs } from '@/api/clientProfile'
 import { ElMessage } from 'element-plus'
@@ -155,6 +155,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update'])
 
+const formRef = ref(null)
 const uploading = ref(false)
 const dbdInput = ref(null)
 const pp20Input = ref(null)
@@ -173,6 +174,9 @@ const form = reactive({
   thai_address: props.formData?.thai_address || '',
 })
 
+// 从 Step1 审核结果中判断是否需要进口许可证
+const licenseRequired = computed(() => !!props.formData?.license_required)
+
 onMounted(async () => {
   try {
     const res = await getCompanyDocs()
@@ -185,6 +189,16 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 })
+
+// 监听 formData 变化，切换回来时恢复数据
+watch(() => props.formData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+  if (newVal.dbd_file !== undefined) form.dbd_file = newVal.dbd_file
+  if (newVal.pp20_file !== undefined) form.pp20_file = newVal.pp20_file
+  if (newVal.company_stamp_file !== undefined) form.company_stamp_file = newVal.company_stamp_file
+  if (newVal.director_passport_file !== undefined) form.director_passport_file = newVal.director_passport_file
+  if (newVal.thai_address !== undefined) form.thai_address = newVal.thai_address || ''
+}, { deep: true, immediate: false })
 
 function onSelectDoc(id) {
   if (id === 0) {

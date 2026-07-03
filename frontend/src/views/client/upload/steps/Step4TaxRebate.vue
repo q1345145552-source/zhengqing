@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { uploadFile } from '@/api/submission'
 import { ElMessage } from 'element-plus'
 
@@ -119,6 +119,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update'])
 
+const formRef = ref(null)
 const uploading = ref(false)
 
 const form = reactive({
@@ -129,6 +130,17 @@ const form = reactive({
   invoice_file: props.formData?.invoice_file || null,
   packing_list_file: props.formData?.packing_list_file || null,
 })
+
+// 监听 formData 变化，切换回来时恢复数据
+watch(() => props.formData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+  if (newVal.need_rebate !== undefined) form.need_rebate = newVal.need_rebate
+  if (newVal.customs_company_name !== undefined) form.customs_company_name = newVal.customs_company_name || ''
+  if (newVal.logistics_contact !== undefined) form.logistics_contact = newVal.logistics_contact || ''
+  if (newVal.logistics_code !== undefined) form.logistics_code = newVal.logistics_code || ''
+  if (newVal.invoice_file !== undefined) form.invoice_file = newVal.invoice_file
+  if (newVal.packing_list_file !== undefined) form.packing_list_file = newVal.packing_list_file
+}, { deep: true, immediate: false })
 
 function emitUpdate() {
   emit('update', { ...form })
