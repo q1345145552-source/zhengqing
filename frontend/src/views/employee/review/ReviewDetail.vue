@@ -131,10 +131,16 @@
             </template>
             <template v-else>
               <el-descriptions-item label="商业发票">
-                {{ step4?.invoice_file?.original_name || '未上传' }}
+                <el-link v-if="step4?.invoice_file?.original_name" type="primary" :underline="false" @click="openFile(step4.invoice_file)">
+                  {{ step4.invoice_file.original_name }}
+                </el-link>
+                <span v-else>未上传</span>
               </el-descriptions-item>
               <el-descriptions-item label="装箱单">
-                {{ step4?.packing_list_file?.original_name || '未上传' }}
+                <el-link v-if="step4?.packing_list_file?.original_name" type="primary" :underline="false" @click="openFile(step4.packing_list_file)">
+                  {{ step4.packing_list_file.original_name }}
+                </el-link>
+                <span v-else>未上传</span>
               </el-descriptions-item>
             </template>
           </el-descriptions>
