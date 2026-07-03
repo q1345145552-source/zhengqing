@@ -119,7 +119,6 @@ const submissionController = {
   async upload(req, res) {
     try {
       const { id } = req.params;
-      const stage = parseInt(req.body.stage) || 1;
       const file = req.file;
 
       if (!file) {
@@ -136,7 +135,11 @@ const submissionController = {
       }
 
       // 构造可访问的相对 URL 路径
-      const url = '/uploads/' + id + '/' + stage + '/' + file.filename;
+      // 用实际文件路径反推 URL，避免 multer 与 body 解析时序导致的 stage 不一致
+      const { UPLOAD_BASE } = require('../middleware/upload');
+      const url = file.path.replace(UPLOAD_BASE, '/uploads');
+      const pathParts = file.path.replace(UPLOAD_BASE + '/', '').split('/');
+      const actualStage = parseInt(pathParts[1]) || 0;
 
       const fileInfo = {
         original_name: file.originalname,
@@ -146,7 +149,7 @@ const submissionController = {
         size: file.size,
       };
 
-      const saved = await Submission.saveFile(id, stage, fileInfo);
+      const saved = await Submission.saveFile(id, actualStage, fileInfo);
 
       return res.json({
         code: 200,
