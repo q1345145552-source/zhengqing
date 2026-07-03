@@ -54,6 +54,13 @@
         保存草稿
       </el-button>
       <el-button
+        @click="discardDraft"
+        type="danger"
+        plain
+      >
+        放弃草稿重新填写
+      </el-button>
+      <el-button
         v-if="currentStep < 4"
         type="primary"
         @click="nextStep"
@@ -82,6 +89,7 @@ import {
   createSubmission,
   saveStep,
   submitSubmission,
+  deleteSubmission,
 } from '@/api/submission'
 import Step1Product from './steps/Step1Product.vue'
 import Step2Company from './steps/Step2Company.vue'
@@ -92,6 +100,7 @@ const router = useRouter()
 const loading = ref(true)
 const saving = ref(false)
 const submitting = ref(false)
+const discarding = ref(false)
 const submission = ref(null)
 const currentStep = ref(1)
 const stepData = ref({})
@@ -209,6 +218,35 @@ async function saveDraft() {
     ElMessage.error('保存失败')
   } finally {
     saving.value = false
+  }
+}
+
+async function discardDraft() {
+  if (!submission.value) return
+  try {
+    await ElMessageBox.confirm(
+      '当前已保存的草稿将被删除，确认放弃并重新填写？',
+      '放弃草稿',
+      { confirmButtonText: '确认放弃', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch { return }
+
+  discarding.value = true
+  try {
+    await deleteSubmission(submission.value.id)
+    // 清空本地状态
+    submission.value = null
+    allStepData.value = {}
+    stepData.value = {}
+    currentStep.value = 1
+    // 重新创建一份全新的
+    const res = await createSubmission()
+    submission.value = res.data
+    ElMessage.success('草稿已放弃，请重新填写')
+  } catch {
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    discarding.value = false
   }
 }
 

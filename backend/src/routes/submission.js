@@ -50,4 +50,7 @@ router.post('/:id/submit', submissionController.submit);
 // PUT /api/submissions/:id/resubmit - 退回后重新提交
 router.put('/:id/resubmit', submissionController.resubmit);
 
+// DELETE /api/submissions/:id - 放弃草稿
+router.delete('/:id', submissionController.destroy);
+
 module.exports = router;

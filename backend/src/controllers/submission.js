@@ -136,7 +136,7 @@ const submissionController = {
       }
 
       // 构造可访问的相对 URL 路径
-      const url = `/uploads/${id}/${stage}/${file.filename}`;
+      const url = '/uploads/' + id + '/' + stage + '/' + file.filename;
 
       const fileInfo = {
         original_name: file.originalname,
@@ -215,6 +215,36 @@ const submissionController = {
       var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; return res.status(500).json({ code: 500, message: msg });
     }
   },
+
+  /**
+   * DELETE /api/submissions/:id
+   * 放弃草稿 — 只能删除自己的、状态为 draft 的提交
+   */
+  async destroy(req, res) {
+    try {
+      const { id } = req.params;
+      const submission = await Submission.findById(id);
+      if (!submission) {
+        return res.status(404).json({ code: 404, message: '提交不存在' });
+      }
+      if (submission.user_id !== req.user.id) {
+        return res.status(403).json({ code: 403, message: '无权删除该提交' });
+      }
+      if (submission.status !== 'draft') {
+        return res.status(400).json({ code: 400, message: '只能删除草稿状态的提交' });
+      }
+
+      const { query } = require('../db');
+      // 级联删除：子表有 ON DELETE CASCADE，只需删主表
+      await query('DELETE FROM submissions WHERE id = $1', [id]);
+      return res.json({ code: 200, message: '草稿已放弃' });
+    } catch (err) {
+      console.error('[Submission] Destroy error:', err);
+      var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message;
+      return res.status(500).json({ code: 500, message: msg });
+    }
+  },
+
 };
 
 module.exports = submissionController;

@@ -61,6 +61,13 @@ export function getMySubmissions(params = {}) {
 }
 
 /**
+ * 放弃草稿
+ */
+export function deleteSubmission(id) {
+  return request.delete(`/submissions/${id}`)
+}
+
+/**
  * 退回后重新提交
  */
 export function resubmitSubmission(id) {
