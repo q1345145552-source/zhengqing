@@ -297,6 +297,10 @@ const EmployeeReview = {
         registered_at: registerLog ? registerLog.created_at : null,
       },
 
+      // 许可证信息
+      license_type: s.license_type || null,
+      license_docs: license_docs2.rows,
+
       // 文件列表
       files: files.rows,
 

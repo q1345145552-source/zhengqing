@@ -161,7 +161,7 @@
         </template>
         <p style="color:#909399;margin-bottom:12px">该订单需要办理 {{ data.license_type }} 许可证，请上传对应的证件文件</p>
         <el-upload
-          :action="'/api/client/submissions/' + data.id + '/upload-license'"
+          :action="'/api/finance/client/submissions/' + data.id + '/upload-license'"
           :headers="uploadHeaders"
           :data="{ license_type: data.license_type, stage: 1 }"
           :on-success="onLicenseUploaded"
