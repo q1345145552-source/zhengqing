@@ -28,3 +28,4 @@ pnpm-debug.log*
 
 # 操作系统
 Thumbs.db
+.github/deploy_key
