@@ -265,13 +265,14 @@ const Submission = {
     const submission = await query('SELECT * FROM submissions WHERE id = $1', [id]);
     if (!submission.rows[0]) return null;
 
-    const [step1, step2, step3, step4, step5, files] = await Promise.all([
+    const [step1, step2, step3, step4, step5, files, license_docs] = await Promise.all([
       query('SELECT * FROM submission_products WHERE submission_id = $1', [id]),
       query('SELECT * FROM submission_company_docs WHERE submission_id = $1', [id]),
       query('SELECT * FROM submission_customs_auth WHERE submission_id = $1', [id]),
       query('SELECT * FROM submission_tax_rebate WHERE submission_id = $1', [id]),
       query('SELECT * FROM submission_shipments WHERE submission_id = $1', [id]),
       query('SELECT * FROM submission_files WHERE submission_id = $1 ORDER BY stage, id', [id]),
+      query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [id]),
     ]);
 
     return {
@@ -282,6 +283,7 @@ const Submission = {
       step4: step4.rows[0] || null,
       step5: step5.rows[0] || null,
       files: files.rows,
+      license_docs: license_docs.rows,
     };
   },
 };

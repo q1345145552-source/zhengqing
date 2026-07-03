@@ -143,6 +143,22 @@
       />
     </el-card>
 
+    <!-- 扣款记录 -->
+    <el-card header="扣款记录" style="margin-top:20px">
+      <el-table :data="chargeHistory" stripe empty-text="暂无扣款记录">
+        <el-table-column label="扣款时间" width="170">
+          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column label="申请编号" width="140">
+          <template #default="{ row }">{{ row.application_no || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="金额" width="120">
+          <template #default="{ row }">- ¥{{ row.amount }}</template>
+        </el-table-column>
+        <el-table-column prop="description" label="说明" min-width="180" show-overflow-tooltip />
+      </el-table>
+    </el-card>
+
     <!-- 水单预览弹窗 -->
     <el-dialog v-model="showSlip" title="支付水单" width="600px">
       <img v-if="slipUrl && !slipUrl.toLowerCase().endsWith('.pdf')" :src="slipUrl" style="width:100%;max-height:70vh;object-fit:contain" />
@@ -176,12 +192,21 @@ const slipFileList = ref([])
 const slipFile = ref(null)
 const showSlip = ref(false)
 const slipUrl = ref('')
+const chargeHistory = ref([])
 
 onMounted(async () => {
   try { const w = await getWallet(); balance.value = w.data.balance } catch { /* */ }
   loadTransactions()
   loadDepositRequests()
+  loadChargeHistory()
 })
+
+async function loadChargeHistory() {
+  try {
+    const res = await request.get('/finance/client/charge-history')
+    chargeHistory.value = res.data || []
+  } catch { chargeHistory.value = [] }
+}
 
 function handleSlipChange(file) {
   slipFile.value = file.raw

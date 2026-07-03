@@ -470,4 +470,51 @@ router.post('/admin/deposit', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
+
+// ==================== 客户许可证上传 ====================
+const licenseUpload = require('../middleware/upload');
+
+router.post('/client/submissions/:id/upload-license', auth, role('client'), licenseUpload.single('file'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const license_type = req.body.license_type;
+    if (!req.file) return res.status(400).json({ code: 400, message: '请选择文件' });
+    if (!['FDA','TISI','NBTC'].includes(license_type)) return res.status(400).json({ code: 400, message: '无效的证件类型' });
+
+    const { query } = require('../db');
+    const url = '/uploads/' + id + '/' + (req.body.stage || '0') + '/' + req.file.filename;
+
+    const { rows: [doc] } = await query(
+      'INSERT INTO submission_license_docs (submission_id, license_type, file_name, file_path, url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [id, license_type, req.file.originalname, req.file.path, url]
+    );
+    res.json({ code: 200, message: '上传成功', data: doc });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+router.get('/client/submissions/:id/license-docs', auth, async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [req.params.id]);
+    res.json({ code: 200, data: rows });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// ==================== 扣款历史 ====================
+router.get('/client/charge-history', auth, role('client'), async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query(
+      `SELECT wt.id, wt.submission_id, s.application_no, wt.amount, wt.description, wt.created_at
+       FROM wallet_transactions wt
+       LEFT JOIN submissions s ON wt.submission_id = s.id
+       WHERE wt.user_id = $1 AND wt.type = 'charge'
+       ORDER BY wt.created_at DESC LIMIT 100`,
+      [req.user.id]
+    );
+    res.json({ code: 200, data: rows });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
 module.exports = router;
+

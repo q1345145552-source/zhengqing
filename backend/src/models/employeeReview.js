@@ -36,7 +36,7 @@ const EmployeeReview = {
    * 获取单个提交的完整详情（含所有 5 步数据 + 文件 + 用户信息）
    */
   async detail(submissionId) {
-    const [sub, step1, step2, step3, step4, step5, files, user] = await Promise.all([
+    const [sub, step1, step2, step3, step4, step5, files, license_docs, user] = await Promise.all([
       query(`SELECT s.*, u.username AS client_name, u.email AS client_email
              FROM submissions s JOIN users u ON s.user_id = u.id WHERE s.id = $1`, [submissionId]),
       query('SELECT * FROM submission_products WHERE submission_id = $1', [submissionId]),
@@ -45,6 +45,7 @@ const EmployeeReview = {
       query('SELECT * FROM submission_tax_rebate WHERE submission_id = $1', [submissionId]),
       query('SELECT * FROM submission_shipments WHERE submission_id = $1', [submissionId]),
       query('SELECT * FROM submission_files WHERE submission_id = $1 ORDER BY stage, id', [submissionId]),
+      query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [submissionId]),
     ]);
 
     if (!sub.rows[0]) return null;
@@ -57,6 +58,7 @@ const EmployeeReview = {
       step4: step4.rows[0] || null,
       step5: step5.rows[0] || null,
       files: files.rows,
+      license_docs: license_docs.rows,
     };
   },
 
@@ -200,7 +202,7 @@ const EmployeeReview = {
    * 导出汇总：全量资料 + 费用 + 时间线 + Next注册信息
    */
   async exportData(submissionId) {
-    const [sub, step1, step2, step3, step4, step5, files, charges, chargeLog, logs] = await Promise.all([
+    const [sub, step1, step2, step3, step4, step5, files, license_docs2, charges, chargeLog, logs] = await Promise.all([
       query(`SELECT s.*, u.username AS client_name, u.email AS client_email
              FROM submissions s JOIN users u ON s.user_id = u.id WHERE s.id = $1`, [submissionId]),
       query('SELECT * FROM submission_products WHERE submission_id = $1', [submissionId]),
@@ -209,6 +211,7 @@ const EmployeeReview = {
       query('SELECT * FROM submission_tax_rebate WHERE submission_id = $1', [submissionId]),
       query('SELECT * FROM submission_shipments WHERE submission_id = $1', [submissionId]),
       query('SELECT * FROM submission_files WHERE submission_id = $1 ORDER BY stage, id', [submissionId]),
+      query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [submissionId]),
       query('SELECT * FROM submission_charges WHERE submission_id = $1 ORDER BY is_optional, id', [submissionId]),
       query('SELECT * FROM submission_charge_logs WHERE submission_id = $1 ORDER BY id DESC LIMIT 1', [submissionId]),
       query('SELECT rl.*, u.username AS operator_name FROM review_logs rl JOIN users u ON rl.employee_id = u.id WHERE rl.submission_id = $1 ORDER BY rl.created_at ASC', [submissionId]),

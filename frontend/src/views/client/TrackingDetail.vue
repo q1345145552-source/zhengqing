@@ -151,6 +151,37 @@
         </el-table>
       </el-card>
 
+      <!-- 区块四点五：许可证上传 -->
+      <el-card v-if="data.license_type" shadow="never">
+        <template #header>
+          <div class="block-title">
+            <el-icon><Document /></el-icon>
+            许可证上传 — {{ data.license_type }}
+          </div>
+        </template>
+        <p style="color:#909399;margin-bottom:12px">该订单需要办理 {{ data.license_type }} 许可证，请上传对应的证件文件</p>
+        <el-upload
+          :action="'/api/client/submissions/' + data.id + '/upload-license'"
+          :headers="uploadHeaders"
+          :data="{ license_type: data.license_type, stage: 1 }"
+          :on-success="onLicenseUploaded"
+          :before-upload="beforeUpload"
+          accept="image/*,.pdf"
+          :show-file-list="false"
+        >
+          <el-button type="primary" :loading="uploading"><el-icon><Upload /></el-icon> 上传 {{ data.license_type }} 证件</el-button>
+        </el-upload>
+        <el-table v-if="licenseDocs.length > 0" :data="licenseDocs" size="small" style="margin-top:12px">
+          <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="license_type" label="类型" width="80" />
+          <el-table-column label="操作" width="80">
+            <template #default="{row}">
+              <el-link type="primary" :href="row.url || (row.file_path && row.file_path.startsWith('/') ? row.file_path : '/uploads' + row.file_path)" target="_blank">查看</el-link>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+
       <!-- 区块五：发货信息 -->
       <el-card shadow="never"><template #header><div class="block-title"><el-icon><Ship /></el-icon> 发货信息</div></template>
         <el-descriptions v-if="data.tracking_company" :column="2" border size="small">
@@ -265,9 +296,12 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const loading = ref(false)
 const data = reactive({})
+const uploadHeaders = computed(() => ({ Authorization: 'Bearer ' + localStorage.getItem('token') }))
 const timeline = ref([])
 const warehouse = ref(null)
 const showShipForm = ref(false)
+const uploading = ref(false)
+const licenseDocs = ref([])
 const shipLoading = ref(false)
 const shipForm = ref({ company: '', number: '' })
 
@@ -326,6 +360,34 @@ const freightRows = computed(() => {
   return rows
 })
 
+async function onLicenseUploaded(res) {
+  if (res.code === 200) {
+    ElMessage.success('上传成功')
+    loadLicenseDocs()
+  }
+}
+
+function beforeUpload(file) {
+  const allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf']
+  if (!allowed.includes(file.type)) {
+    ElMessage.error('仅支持图片和PDF格式')
+    return false
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    ElMessage.error('文件大小不能超过20MB')
+    return false
+  }
+  uploading.value = true
+  return true
+}
+
+async function loadLicenseDocs() {
+  try {
+    const res = await request.get('/finance/client/submissions/' + data.id + '/license-docs')
+    licenseDocs.value = res.data || []
+  } catch { licenseDocs.value = [] }
+}
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -341,6 +403,7 @@ onMounted(async () => {
     warehouse.value = whRes.data || null
   } catch { /* */ }
   finally { loading.value = false }
+  loadLicenseDocs()
 })
 
 function fileUrl(obj) {

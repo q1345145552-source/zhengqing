@@ -205,4 +205,47 @@ router.delete('/submissions/:id/customs-docs/:docId', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
+
+// 员工设置许可证类型
+router.put('/submissions/:id/set-license-type', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { license_type } = req.body;
+    if (!['FDA','TISI','NBTC'].includes(license_type)) {
+      return res.status(400).json({ code: 400, message: '无效的证件类型' });
+    }
+    const { query } = require('../db');
+    await query('UPDATE submissions SET license_type = $2 WHERE id = $1', [id, license_type]);
+    res.json({ code: 200, message: '已设置', data: { license_type } });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 员工查看客户上传的许可证文件
+router.get('/submissions/:id/license-docs', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [req.params.id]);
+    res.json({ code: 200, data: rows });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 扣款历史（员工查看所有）
+router.get('/charge-history', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { rows } = await query(
+      `SELECT wt.id, wt.user_id, u.username AS client_name, wt.submission_id,
+              s.application_no, wt.amount, wt.type, wt.description, wt.created_at,
+              wt.operated_by_name
+       FROM wallet_transactions wt
+       JOIN users u ON wt.user_id = u.id
+       LEFT JOIN submissions s ON wt.submission_id = s.id
+       WHERE wt.type = 'charge'
+       ORDER BY wt.created_at DESC LIMIT 200`
+    );
+    res.json({ code: 200, data: rows });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
 module.exports = router;
+

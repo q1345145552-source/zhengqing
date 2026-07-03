@@ -29,6 +29,7 @@ const EmployeeReviewDetail = () => import('@/views/employee/review/ReviewDetail.
 const EmployeeReviewHistory = () => import('@/views/employee/review/ReviewHistory.vue')
 const EmployeeTracking = () => import('@/views/employee/review/Tracking.vue')
 const EmployeePendingCharge = () => import('@/views/employee/review/PendingCharge.vue')
+const EmployeeChargeHistory = () => import('@/views/employee/review/ChargeHistory.vue')
 const EmployeeFeeEstimate = () => import('@/views/employee/review/FeeEstimate.vue')
 const EmployeeExportSummary = () => import('@/views/employee/review/ExportSummary.vue')
 const EmployeeDepositReview = () => import('@/views/employee/review/DepositReview.vue')
@@ -225,6 +226,12 @@ const routes = [
         name: 'EmployeePendingCharge',
         component: EmployeePendingCharge,
         meta: { title: '待扣款确认', icon: 'WarningFilled' },
+      },
+      {
+        path: 'charge-history',
+        name: 'EmployeeChargeHistory',
+        component: EmployeeChargeHistory,
+        meta: { title: '扣款记录', icon: 'Money' },
       },
       {
         path: 'fee-estimate',

@@ -61,6 +61,35 @@
                 </el-form-item>
               </el-col>
             </el-row>
+            <el-row :gutter="16" v-if="reviewForm.need_license">
+              <el-col :span="12">
+                <el-form-item label="许可证类型">
+                  <el-select v-model="reviewForm.license_type" placeholder="选择证件类型" style="width:100%" @change="setLicenseType">
+                    <el-option label="FDA 食品药品监督管理局" value="FDA" />
+                    <el-option label="TISI 泰国工业标准协会" value="TISI" />
+                    <el-option label="NBTC 泰国广播通信委员会" value="NBTC" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <!-- 客户上传的许可证文件 -->
+            <el-row :gutter="16" v-if="reviewForm.license_type && licenseDocs.length > 0" style="margin-top:12px">
+              <el-col :span="24">
+                <h4>客户已上传的证件</h4>
+                <el-table :data="licenseDocs" size="small" style="margin-top:8px">
+                  <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
+                  <el-table-column prop="license_type" label="证件类型" width="100" />
+                  <el-table-column prop="uploaded_at" label="上传时间" width="170">
+                    <template #default="{row}">{{ formatDate(row.uploaded_at) }}</template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="80">
+                    <template #default="{row}">
+                      <el-link type="primary" :href="row.url" target="_blank">查看</el-link>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-col>
+            </el-row>
           </el-form>
         </div>
       </el-tab-pane>
@@ -476,8 +505,23 @@ const registering = ref(false)
 const activeTab = ref('step1')
 const data = reactive({ review_status: 'pending' })
 
-const reviewForm = reactive({ hs_code: '', tax_rate: '', need_form_e: false, need_license: false })
+const reviewForm = reactive({ hs_code: '', tax_rate: '', need_form_e: false, need_license: false, license_type: '' })
 const nextForm = reactive({ next_account: '', register_status: '', notes: '' })
+const licenseDocs = ref([])
+
+async function setLicenseType(val) {
+  try {
+    await request.put('/employee/submissions/' + route.params.id + '/set-license-type', { license_type: val })
+    ElMessage.success('许可证类型已设置')
+  } catch { ElMessage.error('设置失败') }
+}
+
+async function loadLicenseDocs() {
+  try {
+    const res = await request.get('/employee/submissions/' + route.params.id + '/license-docs')
+    licenseDocs.value = res.data || []
+  } catch { licenseDocs.value = [] }
+}
 
 const step1 = computed(() => data.step1 || {})
 const step2 = computed(() => data.step2 || {})
@@ -537,7 +581,7 @@ const saveStatus = ref('') // '' | 'saving' | 'saved'
 const isDirty = ref(false)
 let autoSaveTimer = null
 
-onMounted(async () => { await loadDetail(); loadWarehouse(); loadCustomsDocs() })
+onMounted(async () => { await loadDetail(); loadWarehouse(); loadCustomsDocs(); loadLicenseDocs() })
 
 async function loadWarehouse() {
   try {
@@ -586,6 +630,7 @@ async function loadDetail() {
       reviewForm.tax_rate = step1.value.tariff_rate || ''
       reviewForm.need_form_e = step1.value.form_e_eligible || false
       reviewForm.need_license = step1.value.license_required || false
+      reviewForm.license_type = data.license_type || step1.value.license_type || ''
     }
     nextForm.next_account = data.next_account || ''
     nextForm.register_status = data.next_register_status || ''
