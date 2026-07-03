@@ -153,11 +153,13 @@
 
       <!-- 区块五：发货信息 -->
       <el-card shadow="never"><template #header><div class="block-title"><el-icon><Ship /></el-icon> 发货信息</div></template>
-        <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="运单号">{{ data.step5?.tracking_number || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="发货时间">{{ fmt(data.step5?.shipped_at) }}</el-descriptions-item>
+        <el-descriptions v-if="data.tracking_company" :column="2" border size="small">
+          <el-descriptions-item label="快递公司">{{ data.tracking_company || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="运单号">{{ data.tracking_number || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="发货时间">{{ fmt(data.shipped_at) }}</el-descriptions-item>
           <el-descriptions-item label="到仓时间">{{ fmt(data.arrived_at_warehouse) }}</el-descriptions-item>
         </el-descriptions>
+        <el-empty v-else description="未发货" :image-size="60" />
       </el-card>
 
       <!-- 区块六：费用明细 -->
@@ -352,7 +354,7 @@ function fileUrl(obj) {
     p = idx >= 0 ? sp.substring(idx) : ''
   }
   if (!p) return ''
-  return `http://localhost:3001${p}`
+  return p
 }
 function fmt(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
 </script>
