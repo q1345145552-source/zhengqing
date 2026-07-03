@@ -26,3 +26,4 @@ app.use(i18n)
 app.use(ElementPlus, { locale: elLocales[currentLang] || zhCn })
 
 app.mount('#app')
+// deploy test Fri Jul  3 17:42:11 +07 2026
