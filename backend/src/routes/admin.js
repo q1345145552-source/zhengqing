@@ -291,21 +291,32 @@ router.put('/customers/:id/status', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
-// ==================== 产品白名单 ====================
+// ==================== 产品白名单 / 仓库 / 资料模板（字段白名单防SQL注入） ====================
+const TABLE_COLUMNS = {
+  product_whitelist: ['product_name', 'hs_code', 'category', 'tariff_rate', 'notes', 'is_active'],
+  warehouses: ['name', 'address', 'contact_person', 'contact_phone', 'notes', 'is_active'],
+  doc_templates: ['name', 'description', 'cargo_type', 'sort_order', 'is_required', 'notes'],
+};
+
 const whitelistCRUD = (path, table) => {
   router.get(path, async (req, res) => { try { const { rows } = await query(`SELECT * FROM ${table} ORDER BY id`); res.json({ code: 200, data: rows }); } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); } });
+
   router.post(path, async (req, res) => {
     try {
-      const keys = Object.keys(req.body).filter(k => req.body[k] !== undefined);
+      const allowedCols = TABLE_COLUMNS[table] || [];
+      const keys = Object.keys(req.body).filter(k => allowedCols.includes(k) && req.body[k] !== undefined);
+      if (keys.length === 0) return res.status(400).json({ code: 400, message: '无有效字段' });
       const vals = keys.map(k => req.body[k]);
       const { rows: [r] } = await query(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`, vals);
       res.json({ code: 200, message: '创建成功', data: r });
     } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
   });
+
   router.put(`${path}/:id`, async (req, res) => {
     try {
+      const allowedCols = TABLE_COLUMNS[table] || [];
       const fields = []; const values = [req.params.id]; let idx = 2;
-      Object.entries(req.body).forEach(([k, v]) => { if (v !== undefined) { fields.push(`${k} = $${idx++}`); values.push(v); } });
+      Object.entries(req.body).forEach(([k, v]) => { if (allowedCols.includes(k) && v !== undefined) { fields.push(`${k} = $${idx++}`); values.push(v); } });
       if (fields.length === 0) return res.status(400).json({ code: 400, message: '无更新内容' });
       fields.push('updated_at = CURRENT_TIMESTAMP');
       const { rows: [r] } = await query(`UPDATE ${table} SET ${fields.join(', ')} WHERE id = $1 RETURNING *`, values);
@@ -313,6 +324,7 @@ const whitelistCRUD = (path, table) => {
       res.json({ code: 200, message: '更新成功', data: r });
     } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
   });
+
   router.delete(`${path}/:id`, async (req, res) => {
     try { await query(`DELETE FROM ${table} WHERE id = $1`, [req.params.id]); res.json({ code: 200, message: '删除成功' }); }
     catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }

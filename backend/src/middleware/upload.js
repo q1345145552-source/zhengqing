@@ -44,6 +44,47 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// 文件头魔数校验：防止客户端伪造 mimetype
+const MAGIC_BYTES = {
+  'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+  'image/png': [[0x89, 0x50, 0x4E, 0x47]],
+  'image/gif': [[0x47, 0x49, 0x46]],
+  'image/webp': [[0x52, 0x49, 0x46, 0x46]], // RIFF
+  'application/pdf': [[0x25, 0x50, 0x44, 0x46]],
+  'application/msword': [[0xD0, 0xCF, 0x11, 0xE0]],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [[0x50, 0x4B, 0x03, 0x04]],
+};
+
+function validateMagicBytes(filePath, claimedMime) {
+  const expected = MAGIC_BYTES[claimedMime];
+  if (!expected) return true; // 不在检查列表则跳过
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.alloc(8);
+    fs.readSync(fd, buf, 0, 8, 0);
+    fs.closeSync(fd);
+    return expected.some(sig => sig.every((byte, i) => buf[i] === byte));
+  } catch { return false; }
+}
+
+// 包装 multer 方法：上传完成后校验文件头
+function wrapWithMagicCheck(mw) {
+  return function(req, res, next) {
+    mw(req, res, function(err) {
+      if (err) return next(err);
+      const files = req.files || (req.file ? [req.file] : []);
+      for (const f of files) {
+        if (!validateMagicBytes(f.path, f.mimetype)) {
+          // 删除伪造文件
+          try { fs.unlinkSync(f.path); } catch {}
+          return next(new Error(`文件类型校验失败：${f.originalname} 的文件头与声明的 MIME 类型 ${f.mimetype} 不匹配`));
+        }
+      }
+      next();
+    });
+  };
+}
+
 const upload = multer({
   storage,
   fileFilter,
@@ -77,8 +118,9 @@ const _any = upload.any.bind(upload);
 
 upload.single = function(name) {
   const mw = _single(name);
+  const wrapped = wrapWithMagicCheck(mw);
   return function(req, res, next) {
-    mw(req, res, function(err) {
+    wrapped(req, res, function(err) {
       if (req.file) req.file.originalname = fixEncoding(req.file.originalname);
       next(err);
     });
@@ -87,8 +129,9 @@ upload.single = function(name) {
 
 upload.array = function(name, maxCount) {
   const mw = _array(name, maxCount);
+  const wrapped = wrapWithMagicCheck(mw);
   return function(req, res, next) {
-    mw(req, res, function(err) {
+    wrapped(req, res, function(err) {
       if (req.files) req.files.forEach(f => { f.originalname = fixEncoding(f.originalname); });
       next(err);
     });

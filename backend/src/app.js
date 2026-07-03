@@ -5,6 +5,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const compression = require('compression');
 const config = require('./config');
+const { errorHandler, attachResError } = require('./middleware/errorHandler');
 
 const path = require('path');
 
@@ -26,9 +27,9 @@ app.use(compression({
   threshold: 1024,
 }));
 
-// CORS 跨域
+// CORS 跨域（通过 ALLOWED_ORIGINS 环境变量配置，逗号分隔）
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:4173'],
+  origin: config.cors.origins,
   credentials: true,
 }));
 
@@ -49,6 +50,7 @@ app.use((req, res, next) => {
 
 // 解析 JSON 请求体
 app.use(express.json());
+app.use(attachResError);
 app.use(express.urlencoded({ extended: true }));
 
 // 静态文件服务（上传的文件）
@@ -90,13 +92,7 @@ app.use((req, res) => {
 });
 
 // ---------- 全局错误处理 ----------
-app.use((err, req, res, _next) => {
-  console.error('[App] Unhandled error:', err);
-  res.status(500).json({
-    code: 500,
-    message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message,
-  });
-});
+app.use(errorHandler);
 
 // ---------- 启动服务 ----------
 app.listen(config.port, () => {
