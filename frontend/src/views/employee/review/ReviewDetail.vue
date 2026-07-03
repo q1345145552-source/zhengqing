@@ -513,6 +513,7 @@ async function setLicenseType(val) {
   try {
     await request.put('/employee/submissions/' + route.params.id + '/set-license-type', { license_type: val })
     ElMessage.success('许可证类型已设置')
+    loadLicenseDocs()
   } catch { ElMessage.error('设置失败') }
 }
 
@@ -636,6 +637,7 @@ async function loadDetail() {
     nextForm.register_status = data.next_register_status || ''
   } catch { router.push('/employee/review') }
   finally { loading.value = false }
+  loadLicenseDocs()
 }
 
 function imgUrl(img) {
