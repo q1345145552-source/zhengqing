@@ -149,22 +149,6 @@
 
       <el-tab-pane label="发货信息" name="step5">
         <div class="tab-content">
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="确认发货">
-              <el-tag :type="step5?.confirmed ? 'success' : 'info'" size="small">
-                {{ step5?.confirmed ? '已确认' : '待确认' }}
-              </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="运单号">{{ step5?.tracking_number || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="发货时间">{{ formatDate(step5?.shipped_at) }}</el-descriptions-item>
-          </el-descriptions>
-        </div>
-      </el-tab-pane>
-
-      <!-- 费用明细 -->
-      <el-tab-pane name="finance">
-        <template #label><span><el-icon><Money /></el-icon> 费用明细</span></template>
-        <div class="finance-section">
           <!-- 收货仓库地址 -->
           <el-alert v-if="warehouse" type="info" :closable="false" show-icon style="margin-bottom:16px">
             <template #title><span style="font-weight:700">收货仓库 — 客户将自行发货至此地址</span></template>
@@ -174,6 +158,18 @@
             </div>
           </el-alert>
 
+          <el-descriptions :column="2" border size="small">
+            <el-descriptions-item label="快递公司">{{ data?.tracking_company || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="运单号">{{ data?.tracking_number || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="发货时间">{{ formatDate(data?.shipped_at) }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </el-tab-pane>
+
+      <!-- 费用明细 -->
+      <el-tab-pane name="finance">
+        <template #label><span><el-icon><Money /></el-icon> 费用明细</span></template>
+        <div class="finance-section">
           <h4>计费参数</h4>
           <el-form :model="freightParams" inline>
             <el-form-item label="国际路线">
