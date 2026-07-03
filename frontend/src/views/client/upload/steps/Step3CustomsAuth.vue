@@ -171,7 +171,9 @@ onMounted(async () => {
   try {
     const res = await getCustomsAuths()
     savedAuths.value = res.data || []
-    if (savedAuths.value.length > 0) {
+    // 如果当前步骤已有保存的数据（从 formData 恢复），不要用报关授权库覆盖
+    const hasStepData = form.power_of_attorney_file || form.pp20_signed_file || form.dbd_signed_file || form.handler_type !== 'director'
+    if (savedAuths.value.length > 0 && !hasStepData) {
       selectedAuthId.value = savedAuths.value[0].id
       fillFromAuth(savedAuths.value[0])
     }

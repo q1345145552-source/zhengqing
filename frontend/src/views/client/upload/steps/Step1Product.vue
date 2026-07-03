@@ -205,11 +205,7 @@ var rules = {
 };
 
 function getFormData() {
-  return {
-    product_images: form.product_images,
-    thai_name: form.thai_name,
-    english_name: form.english_name,
-  }
+  return { ...form }
 }
 
 defineExpose({ getFormData, formRef })

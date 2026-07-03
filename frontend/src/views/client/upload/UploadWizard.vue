@@ -95,6 +95,9 @@ const submitting = ref(false)
 const submission = ref(null)
 const currentStep = ref(1)
 const stepData = ref({})
+// 本地步骤数据缓存：key=步骤编号, value=步骤表单数据
+// 用于跨步骤切换时保持数据，避免依赖 submission.value 中的旧数据
+const allStepData = ref({})
 let currentStepRef = null
 
 const stepComponents = [
@@ -133,13 +136,17 @@ onMounted(async () => {
 
 function loadStepData() {
   const s = submission.value
-  if (!s) return
-  const stepMap = { 1: s.step1, 2: s.step2, 3: s.step3, 4: s.step4 }
-  stepData.value = stepMap[currentStep.value] || {}
+  const step = currentStep.value
+  // 优先使用本地缓存（用户当前会话中保存的数据），其次用服务端返回的数据
+  const cached = allStepData.value[step]
+  const fromSub = s ? s['step' + step] : null
+  stepData.value = cached || fromSub || {}
 }
 
 function handleStepUpdate(data) {
   stepData.value = { ...stepData.value, ...data }
+  // 同步更新本地缓存
+  allStepData.value[currentStep.value] = { ...stepData.value }
 }
 
 async function saveCurrentStep() {
@@ -149,6 +156,8 @@ async function saveCurrentStep() {
     stepData.value = currentStepRef.getFormData()
   }
   await saveStep(submission.value.id, currentStep.value, stepData.value)
+  // 保存成功后更新本地缓存，确保返回上一步时数据不丢失
+  allStepData.value[currentStep.value] = { ...stepData.value }
 }
 
 async function nextStep() {

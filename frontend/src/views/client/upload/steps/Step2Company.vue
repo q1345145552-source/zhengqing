@@ -47,7 +47,7 @@
       style="margin-bottom: 24px"
     />
 
-    <el-form v-else ref="formRef" :model="form" label-position="top">
+    <el-form v-else ref="formRef" :model="form" :rules="rules" label-position="top">
       <!-- DBD -->
       <el-form-item label="DBD（公司注册证明）" required>
         <div class="upload-row">
@@ -177,8 +177,9 @@ onMounted(async () => {
   try {
     const res = await getCompanyDocs()
     savedDocs.value = res.data || []
-    // 默认选中第一项已有的资料
-    if (savedDocs.value.length > 0) {
+    // 如果当前步骤已有保存的数据（从 formData 恢复），不要用公司资料库覆盖
+    const hasStepData = form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address
+    if (savedDocs.value.length > 0 && !hasStepData) {
       selectedDocId.value = savedDocs.value[0].id
       fillFromDoc(savedDocs.value[0])
     }
