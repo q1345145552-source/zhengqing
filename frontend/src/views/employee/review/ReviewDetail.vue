@@ -76,11 +76,11 @@
           </el-descriptions>
           <el-row :gutter="12" style="margin-top:12px">
             <el-col :span="6" v-for="f in step2Files" :key="f.label">
-              <el-card shadow="hover" class="file-card">
+              <el-card shadow="hover" class="file-card" @click="openFile(f.file)" :class="{ 'clickable': f.file?.original_name }">
                 <div class="file-label">{{ f.label }}</div>
                 <div v-if="f.file?.original_name" class="file-ok">
                   <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-                  {{ f.file.original_name }}
+                  <el-link type="primary" :underline="false" @click.stop="openFile(f.file)">{{ f.file.original_name }}</el-link>
                 </div>
                 <div v-else class="file-none">未上传</div>
               </el-card>
@@ -103,11 +103,11 @@
           </el-descriptions>
           <el-row :gutter="12" style="margin-top:12px" v-if="step3?.handler_type === 'agent'">
             <el-col :span="8" v-for="f in step3Files" :key="f.label">
-              <el-card shadow="hover" class="file-card">
+              <el-card shadow="hover" class="file-card" @click="openFile(f.file)" :class="{ 'clickable': f.file?.original_name }">
                 <div class="file-label">{{ f.label }}</div>
                 <div v-if="f.file?.original_name" class="file-ok">
                   <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-                  {{ f.file.original_name }}
+                  <el-link type="primary" :underline="false" @click.stop="openFile(f.file)">{{ f.file.original_name }}</el-link>
                 </div>
                 <div v-else class="file-none">未上传</div>
               </el-card>
@@ -439,7 +439,7 @@
           <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
           <el-table-column label="操作" width="100">
             <template #default="{row}">
-              <el-link type="primary" :href="`http://localhost:3001${row.file_path}`" target="_blank">下载</el-link>
+              <el-link type="primary" :href="`${row.file_path}`" target="_blank">下载</el-link>
               <el-button size="small" text type="danger" @click="delCustomsDoc(row.id)">删除</el-button>
             </template>
           </el-table-column>
@@ -594,6 +594,16 @@ async function loadDetail() {
 function imgUrl(img) {
   if (!img) return ''
   return img.url || img.stored_path || ''
+}
+
+function fileUrl(file) {
+  if (!file) return ''
+  return file.url || file.stored_path || ''
+}
+
+function openFile(file) {
+  const url = fileUrl(file)
+  if (url) window.open(url, '_blank')
 }
 
 async function handleReview(action) {
@@ -801,6 +811,7 @@ function statusLabel(s) {
   .file-label { font-size: 13px; color: #909399; margin-bottom: 8px; }
   .file-ok { color: #67C23A; font-size: 12px; display: flex; align-items: center; gap: 4px; justify-content: center; }
   .file-none { color: #c0c4cc; font-size: 12px; }
+  &.clickable { cursor: pointer; transition: all 0.2s; &:hover { border-color: #409EFF; box-shadow: 0 2px 8px rgba(64,158,255,.2); } }
 }
 .next-section {
   margin-top: 20px;
