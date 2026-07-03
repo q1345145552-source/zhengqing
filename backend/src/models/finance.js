@@ -15,15 +15,29 @@ const Finance = {
   },
 
   async deposit(userId, amount, description, operatorId, operatorName) {
-    const w = await Finance.getWallet(userId);
-    const newBalance = parseFloat(w.balance) + parseFloat(amount);
-    await query('UPDATE client_wallets SET balance = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1', [userId, newBalance]);
-    const { rows: [tx] } = await query(
-      `INSERT INTO wallet_transactions (user_id, type, amount, balance_after, description, operated_by, operated_by_name)
-       VALUES ($1, 'deposit', $2, $3, $4, $5, $6) RETURNING *`,
-      [userId, amount, newBalance, description || '账户充值', operatorId || null, operatorName || null]
-    );
-    return { balance: newBalance, transaction: tx };
+    const client = await query('BEGIN');
+    try {
+      // 原子扣款/充值，避免竞态条件
+      const { rows: [w] } = await query(
+        'UPDATE client_wallets SET balance = balance + $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1 RETURNING balance',
+        [userId, parseFloat(amount)]
+      );
+      if (!w) {
+        // 钱包不存在则创建
+        await query('INSERT INTO client_wallets (user_id, balance) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET balance = client_wallets.balance + $2, updated_at = CURRENT_TIMESTAMP RETURNING balance', [userId, parseFloat(amount)]);
+      }
+      const newBalance = parseFloat(w?.balance ?? parseFloat(amount));
+      const { rows: [tx] } = await query(
+        `INSERT INTO wallet_transactions (user_id, type, amount, balance_after, description, operated_by, operated_by_name)
+         VALUES ($1, 'deposit', $2, $3, $4, $5, $6) RETURNING *`,
+        [userId, amount, newBalance, description || '账户充值', operatorId || null, operatorName || null]
+      );
+      await query('COMMIT');
+      return { balance: newBalance, transaction: tx };
+    } catch (err) {
+      await query('ROLLBACK');
+      throw err;
+    }
   },
 
   async getTransactions(userId, page = 1, limit = 20) {
@@ -276,39 +290,60 @@ const Finance = {
     };
   },
 
-  // ========== Fix 3+4: 货物到仓扣款 ==========
+  // ========== 货物到仓扣款（原子操作 + 事务） ==========
   async chargeSubmission(submissionId, operatorId, operatorName) {
     const check = await Finance.checkBalance(submissionId);
     if (!check.sufficient) throw new Error(`余额不足，当前余额 ¥${check.balance}，应收 ¥${check.total_amount}，请通知客户充值`);
-    const newBalance = check.balance - check.total_amount;
-    await query('UPDATE client_wallets SET balance = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1', [check.user_id, newBalance]);
-    await query(
-      `INSERT INTO wallet_transactions (user_id, submission_id, type, amount, balance_after, description, operated_by, operated_by_name)
-       VALUES ($1, $2, 'charge', $3, $4, $5, $6, $7)`,
-      [check.user_id, submissionId, check.total_amount, newBalance, '货物到仓自动扣款', operatorId || null, operatorName || null]
-    );
-    await query(
-      `INSERT INTO submission_charge_logs (submission_id, total_amount, status, charged_at, operated_by, operated_by_name)
-       VALUES ($1, $2, 'charged', CURRENT_TIMESTAMP, $3, $4)`,
-      [submissionId, check.total_amount, operatorId || null, operatorName || null]
-    );
-    return { ...check, new_balance: newBalance, status: 'charged' };
+    await query('BEGIN');
+    try {
+      // 原子扣款：balance = balance - amount RETURNING 新余额
+      const { rows: [w] } = await query(
+        'UPDATE client_wallets SET balance = balance - $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1 RETURNING balance',
+        [check.user_id, check.total_amount]
+      );
+      const newBalance = parseFloat(w.balance);
+      await query(
+        `INSERT INTO wallet_transactions (user_id, submission_id, type, amount, balance_after, description, operated_by, operated_by_name)
+         VALUES ($1, $2, 'charge', $3, $4, $5, $6, $7)`,
+        [check.user_id, submissionId, check.total_amount, newBalance, '货物到仓自动扣款', operatorId || null, operatorName || null]
+      );
+      await query(
+        `INSERT INTO submission_charge_logs (submission_id, total_amount, status, charged_at, operated_by, operated_by_name)
+         VALUES ($1, $2, 'charged', CURRENT_TIMESTAMP, $3, $4)`,
+        [submissionId, check.total_amount, operatorId || null, operatorName || null]
+      );
+      await query('COMMIT');
+      return { ...check, new_balance: newBalance, status: 'charged' };
+    } catch (err) {
+      await query('ROLLBACK');
+      throw err;
+    }
   },
 
   async refundSubmission(submissionId, operatorId, operatorName) {
     const { rows: [log] } = await query("SELECT * FROM submission_charge_logs WHERE submission_id = $1 AND status = 'charged' ORDER BY id DESC LIMIT 1", [submissionId]);
     if (!log) throw new Error('未找到扣费记录');
     const { rows: [sub] } = await query('SELECT user_id FROM submissions WHERE id = $1', [submissionId]);
-    const wallet = await Finance.getWallet(sub.user_id);
-    const newBalance = parseFloat(wallet.balance) + parseFloat(log.total_amount);
-    await query('UPDATE client_wallets SET balance = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1', [sub.user_id, newBalance]);
-    await query(
-      `INSERT INTO wallet_transactions (user_id, submission_id, type, amount, balance_after, description, operated_by, operated_by_name)
-       VALUES ($1, $2, 'refund', $3, $4, $5, $6, $7)`,
-      [sub.user_id, submissionId, log.total_amount, newBalance, '退款冲正', operatorId || null, operatorName || null]
-    );
-    await query("UPDATE submission_charge_logs SET status = 'refunded', refunded_at = CURRENT_TIMESTAMP WHERE id = $1", [log.id]);
-    return { refunded_amount: parseFloat(log.total_amount), new_balance: newBalance };
+    await query('BEGIN');
+    try {
+      // 原子退款：balance = balance + amount RETURNING 新余额
+      const { rows: [w] } = await query(
+        'UPDATE client_wallets SET balance = balance + $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1 RETURNING balance',
+        [sub.user_id, parseFloat(log.total_amount)]
+      );
+      const newBalance = parseFloat(w.balance);
+      await query(
+        `INSERT INTO wallet_transactions (user_id, submission_id, type, amount, balance_after, description, operated_by, operated_by_name)
+         VALUES ($1, $2, 'refund', $3, $4, $5, $6, $7)`,
+        [sub.user_id, submissionId, log.total_amount, newBalance, '退款冲正', operatorId || null, operatorName || null]
+      );
+      await query("UPDATE submission_charge_logs SET status = 'refunded', refunded_at = CURRENT_TIMESTAMP WHERE id = $1", [log.id]);
+      await query('COMMIT');
+      return { refunded_amount: parseFloat(log.total_amount), new_balance: newBalance };
+    } catch (err) {
+      await query('ROLLBACK');
+      throw err;
+    }
   },
 
   // ========== Fix 3: 标记到仓 ==========

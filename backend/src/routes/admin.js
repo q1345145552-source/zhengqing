@@ -11,7 +11,7 @@ const role = require('../middleware/role');
 
 router.use(auth);
 // ==================== 客户审核（员工+管理员） ====================
-router.get('/client-review', async (req, res) => {
+router.get('/client-review', role('employee', 'admin'), async (req, res) => {
   try {
     var filter = req.query.filter || 'pending';
     var page = Math.max(1, parseInt(req.query.page) || 1);
@@ -28,7 +28,7 @@ router.get('/client-review', async (req, res) => {
   } catch (err) { console.error(err); var msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
 });
 
-router.put('/client-review/:id', async (req, res) => {
+router.put('/client-review/:id', role('employee', 'admin'), async (req, res) => {
   try {
     var action = req.body.action;
     var comment = req.body.comment;

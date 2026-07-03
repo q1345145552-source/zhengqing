@@ -342,7 +342,13 @@ router.get('/client/deposit-requests', async (req, res) => {
   } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(500).json({ code: 500, message: msg }); }
 });
 router.get('/client/submissions/:id/charges', async (req, res) => {
-  try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }
+  try {
+    const { query } = require('../db');
+    const { rows: [sub] } = await query('SELECT user_id FROM submissions WHERE id = $1', [req.params.id]);
+    if (!sub) return res.status(404).json({ code: 404, message: '申请不存在' });
+    if (sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权访问' });
+    const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data });
+  }
   catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
@@ -482,6 +488,10 @@ router.post('/client/submissions/:id/upload-license', auth, role('client'), lice
     if (!['FDA','TISI','NBTC'].includes(license_type)) return res.status(400).json({ code: 400, message: '无效的证件类型' });
 
     const { query } = require('../db');
+    const { rows: [sub] } = await query('SELECT user_id FROM submissions WHERE id = $1', [id]);
+    if (!sub) return res.status(404).json({ code: 404, message: '申请不存在' });
+    if (sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权操作' });
+
     const url = '/uploads/' + id + '/' + (req.body.stage || '0') + '/' + req.file.filename;
 
     const { rows: [doc] } = await query(
@@ -495,6 +505,9 @@ router.post('/client/submissions/:id/upload-license', auth, role('client'), lice
 router.get('/client/submissions/:id/license-docs', auth, async (req, res) => {
   try {
     const { query } = require('../db');
+    const { rows: [sub] } = await query('SELECT user_id FROM submissions WHERE id = $1', [req.params.id]);
+    if (!sub) return res.status(404).json({ code: 404, message: '申请不存在' });
+    if (sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权访问' });
     const { rows } = await query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [req.params.id]);
     res.json({ code: 200, data: rows });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
