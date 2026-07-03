@@ -193,8 +193,8 @@
         <el-empty v-else description="未发货" :image-size="60" />
       </el-card>
 
-      <!-- 区块六：费用明细 -->
-      <el-card shadow="never"><template #header><div class="block-title"><el-icon><Money /></el-icon> 费用明细</div></template>
+      <!-- 区块六：费用明细和扣款记录 -->
+      <el-card shadow="never"><template #header><div class="block-title"><el-icon><Money /></el-icon> 费用明细和扣款记录</div></template>
         <!-- 国际运费 -->
         <h4>国际运费</h4>
         <el-table :data="freightRows" size="small" stripe>
@@ -234,31 +234,28 @@
         </template>
 
         <div class="total-bar">费用总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
-      </el-card>
 
-      <!-- 区块七：付款状态 -->
-      <el-card shadow="never"><template #header><div class="block-title"><el-icon><Coin /></el-icon> 付款状态</div></template>
-        <!-- 已付款 -->
+        <!-- 扣款记录 -->
+        <el-divider style="margin:20px 0" />
+        <h4 style="margin-bottom:12px">扣款记录</h4>
         <div v-if="data.finance?.charge_log?.status==='charged'" class="pay-block pay-done">
-          <div class="pay-icon-wrap"><el-icon :size="48" color="#fff"><CircleCheckFilled /></el-icon></div>
+          <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><CircleCheckFilled /></el-icon></div>
           <div class="pay-text">
-            <div class="pay-title">已付款</div>
-            <div class="pay-amount">扣款 {{ (data.finance.charge_log.total_amount || 0).toLocaleString() }} ฿</div>
+            <div class="pay-title">已扣款</div>
+            <div class="pay-amount">{{ (data.finance.charge_log.total_amount || 0).toLocaleString() }} ฿</div>
             <div class="pay-time">扣款时间：{{ fmt(data.finance.charge_log.charged_at) }}</div>
           </div>
         </div>
-        <!-- 待付款（未到状态7） -->
         <div v-else-if="(data.tracking_status || 1) < 7" class="pay-block pay-pending">
-          <div class="pay-icon-wrap"><el-icon :size="48" color="#fff"><Clock /></el-icon></div>
+          <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">待付款</div>
             <div class="pay-amount">应付 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</div>
             <div class="pay-time">货物到达泰国仓库时自动扣款</div>
           </div>
         </div>
-        <!-- 扣款失败 -->
         <div v-else class="pay-block pay-failed">
-          <div class="pay-icon-wrap"><el-icon :size="48" color="#fff"><WarningFilled /></el-icon></div>
+          <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><WarningFilled /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">扣款失败</div>
             <div class="pay-amount">应付 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</div>
