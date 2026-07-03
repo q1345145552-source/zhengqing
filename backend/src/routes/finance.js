@@ -298,7 +298,21 @@ var depositUpload = require('multer')({
   }
 });
 
-router.post('/client/deposit', depositUpload.single('slip'), async (req, res) => {
+const _depositMw = depositUpload.single('slip');
+router.post('/client/deposit', (req, res, next) => {
+  _depositMw(req, res, (err) => {
+    if (req.file) {
+      try {
+        const buf = Buffer.from(req.file.originalname, 'latin1');
+        const restored = buf.toString('utf8');
+        if (restored !== req.file.originalname && /[\u0080-\uffff]/.test(restored)) {
+          req.file.originalname = restored;
+        }
+      } catch (e) {}
+    }
+    next(err);
+  });
+}, async (req, res) => {
   try {
     var amount = req.body.amount;
     var description = req.body.description;

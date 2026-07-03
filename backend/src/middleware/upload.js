@@ -53,5 +53,47 @@ const upload = multer({
   },
 });
 
+// 修复非 ASCII 文件名双重编码问题（UTF-8 → Latin-1 → UTF-8）
+function fixEncoding(filename) {
+  try {
+    // 尝试检测是否为双重编码：将字符串按 Latin-1 解码再 UTF-8 编码对比
+    const buf = Buffer.from(filename, 'latin1');
+    const restored = buf.toString('utf8');
+    // 如果还原后包含有效的多字节 UTF-8 字符且与原字符串不同，说明是双重编码
+    if (restored !== filename && /[\u0080-\uffff]/.test(restored)) {
+      return restored;
+    }
+  } catch (e) {
+    // 修复失败则返回原值
+  }
+  return filename;
+}
+
+// 包装 multer 方法以修复文件名编码
+const _single = upload.single.bind(upload);
+const _array = upload.array.bind(upload);
+const _fields = upload.fields.bind(upload);
+const _any = upload.any.bind(upload);
+
+upload.single = function(name) {
+  const mw = _single(name);
+  return function(req, res, next) {
+    mw(req, res, function(err) {
+      if (req.file) req.file.originalname = fixEncoding(req.file.originalname);
+      next(err);
+    });
+  };
+};
+
+upload.array = function(name, maxCount) {
+  const mw = _array(name, maxCount);
+  return function(req, res, next) {
+    mw(req, res, function(err) {
+      if (req.files) req.files.forEach(f => { f.originalname = fixEncoding(f.originalname); });
+      next(err);
+    });
+  };
+};
+
 module.exports = upload;
 module.exports.UPLOAD_BASE = UPLOAD_BASE;
