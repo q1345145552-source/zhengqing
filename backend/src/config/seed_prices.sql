@@ -20,7 +20,7 @@ UPDATE price_rules SET unit_price = 24   WHERE fee_type = 'freight_kg'        AN
 
 -- 附加服务
 UPDATE price_rules SET unit_price = 4000 WHERE fee_type = 'form_e';          -- Form E 产地证
-UPDATE price_rules SET unit_price = 4000 WHERE fee_type = 'china_customs';  -- 中国清关费
+UPDATE price_rules SET unit_price = 4000 WHERE fee_type = 'china_customs';  -- 中国报关费
 UPDATE price_rules SET unit_price = 3500 WHERE fee_type = 'thai_customs';   -- 泰国清关费
 UPDATE price_rules SET unit_price = 1800 WHERE fee_type = 'pallet';         -- 托盘费
 UPDATE price_rules SET unit_price = 2500 WHERE fee_type = 'wooden_box';     -- 木箱包装费

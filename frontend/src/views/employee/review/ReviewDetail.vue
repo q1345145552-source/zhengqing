@@ -597,11 +597,11 @@ const otherTransportCharges = computed(() => charges.value.filter(c => !c.is_opt
 const transportCharges = computed(() => charges.value.filter(c => !c.is_optional))
 const serviceCharges = computed(() => {
   let list = charges.value.filter(c => c.is_optional)
-  // 中国清关费：仅需要退税时显示
+  // 中国报关费：仅需要退税时显示
   if (!step4.value?.need_rebate) {
     list = list.filter(c => c.fee_type !== 'china_customs')
   }
-  // 泰国清关费始终必选，中国清关费(需要退税时)必选
+  // 泰国清关费始终必选，中国报关费(需要退税时)必选
   list.forEach(c => {
     if (c.fee_type === 'thai_customs') c.selected = true
     if (c.fee_type === 'china_customs' && step4.value?.need_rebate) c.selected = true

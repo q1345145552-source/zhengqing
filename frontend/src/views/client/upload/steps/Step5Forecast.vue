@@ -48,7 +48,7 @@
       <el-form-item label="">
         <el-checkbox-group v-model="form.services" @change="emitUpdate">
           <el-checkbox label="form_e" style="margin-right:24px">Form E 产地证 (4,000 ฿)</el-checkbox>
-          <el-checkbox v-if="props.needRebate" label="china_customs" style="margin-right:24px" :disabled="true">中国清关费 (4,000 ฿) <el-tag type="danger" size="small" style="margin-left:4px">必选</el-tag></el-checkbox>
+          <el-checkbox v-if="props.needRebate" label="china_customs" style="margin-right:24px" :disabled="true">中国报关费 (4,000 ฿) <el-tag type="danger" size="small" style="margin-left:4px">必选</el-tag></el-checkbox>
           <el-checkbox label="thai_customs" style="margin-right:24px" :disabled="true">泰国清关费 (3,500 ฿) <el-tag type="danger" size="small" style="margin-left:4px">必选</el-tag></el-checkbox>
           <el-checkbox label="pallet">打托盘费 (1,800 ฿)</el-checkbox>
           <el-checkbox label="wooden_box">木箱打包费 (2,500 ฿)</el-checkbox>
@@ -101,7 +101,7 @@ if (props.formData?.need_form_e) form.services.push('form_e')
 // 泰国清关费始终必选
 if (!form.services.includes('thai_customs')) form.services.push('thai_customs')
 form.need_thai_customs = true
-// 中国清关费仅在需要退税时显示并必选
+// 中国报关费仅在需要退税时显示并必选
 if (props.needRebate) {
   if (!form.services.includes('china_customs')) form.services.push('china_customs')
   form.need_china_customs = true
