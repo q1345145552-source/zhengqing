@@ -11,7 +11,7 @@ const { query } = require('./index');
     for (const r of rows) {
       const addr = r.address;
       let splitPos = -1;
-      for (const kw of ["区", "镇", "乡", "街道"]) {
+      for (const kw of ["街道", "镇", "乡", "区"]) {
         const pos = addr.lastIndexOf(kw);
         if (pos > splitPos) splitPos = pos;
       }
