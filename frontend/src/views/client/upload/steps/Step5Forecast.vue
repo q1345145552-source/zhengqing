@@ -17,15 +17,6 @@
         </el-select>
       </el-form-item>
 
-      <!-- 仓库地址（选完路线后显示） -->
-      <el-alert v-if="warehouse" type="info" :closable="false" show-icon style="margin-bottom:16px">
-        <template #title><span style="font-weight:700">对应收货仓库</span></template>
-        <div style="font-size:13px;line-height:1.6;margin-top:4px">
-          <strong>{{ warehouse.name }}</strong>
-          <div>{{ warehouse.address_prev || '' }} {{ warehouse.address_next || '' }}</div>
-          <div>电话：{{ warehouse.contact_phone }}</div>
-        </div>
-      </el-alert>
 
       <el-row :gutter="16">
         <el-col :span="12">
@@ -83,9 +74,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/api/request'
+import { reactive, watch } from 'vue'
 
 const props = defineProps({
   submissionId: { type: Number, default: null },
@@ -133,15 +122,6 @@ watch(() => props.formData, (newVal) => {
   if (newVal.wooden_box_cbm !== undefined) form.wooden_box_cbm = newVal.wooden_box_cbm || 0
 }, { deep: true, immediate: false })
 
-const warehouse = ref(null)
-
-watch(() => form.route, async (routeVal) => {
-  if (!routeVal) { warehouse.value = null; return }
-  try {
-    const res = await request.get('/finance/warehouses', { params: { route: routeVal } })
-    warehouse.value = res.data
-  } catch { warehouse.value = null }
-})
 
 function emitUpdate() {
   // 确保必选项不被取消
