@@ -136,7 +136,10 @@ function handleCommand(command) {
     }).then(() => {
       authStore.logout()
       router.push('/login')
-    }).catch(() => {})
+    }).catch(() => {
+      authStore.logout()
+      router.push('/login')
+    })
   }
 }
 </script>

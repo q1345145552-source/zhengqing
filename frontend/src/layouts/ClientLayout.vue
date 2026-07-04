@@ -96,7 +96,11 @@ function handleCommand(command) {
     }).then(() => {
       authStore.logout()
       router.push('/login')
-    }).catch(() => {})
+    }).catch(() => {
+      // 弹窗失败时直接退出（如组件被销毁、z-index冲突导致弹窗不显示）
+      authStore.logout()
+      router.push('/login')
+    })
   } else if (command === 'profile') {
     router.push('/client/profile')
   }
