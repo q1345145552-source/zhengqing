@@ -238,7 +238,7 @@ const Submission = {
    */
   async resubmit(id, userId) {
     const result = await query(
-      `UPDATE submissions SET status = 'submitted', review_status = 'pending', review_comment = NULL, updated_at = CURRENT_TIMESTAMP
+      `UPDATE submissions SET status = 'draft', review_status = 'pending', review_comment = NULL, updated_at = CURRENT_TIMESTAMP
        WHERE id = $1 AND user_id = $2 RETURNING *`,
       [id, userId]
     );
