@@ -7,7 +7,7 @@
         资料上传
       </h2>
       <el-tag v-if="submission" type="info" size="small">
-        第 {{ currentStep }}/4 步
+        第 {{ currentStep }}/5 步
       </el-tag>
     </div>
 
@@ -17,6 +17,7 @@
       <el-step title="公司资料" description="上传公司证明文件" />
       <el-step title="报关授权" description="海关报关代理登记" />
       <el-step title="出口退税" description="确认退税申报方式" />
+      <el-step title="预报单" description="填写物流预估信息" />
     </el-steps>
 
     <!-- loading -->
@@ -61,7 +62,7 @@
         放弃草稿重新填写
       </el-button>
       <el-button
-        v-if="currentStep < 4"
+        v-if="currentStep < 5"
         type="primary"
         @click="nextStep"
         :loading="saving"
@@ -95,6 +96,7 @@ import Step1Product from './steps/Step1Product.vue'
 import Step2Company from './steps/Step2Company.vue'
 import Step3CustomsAuth from './steps/Step3CustomsAuth.vue'
 import Step4TaxRebate from './steps/Step4TaxRebate.vue'
+import Step5Forecast from './steps/Step5Forecast.vue'
 
 const router = useRouter()
 const loading = ref(true)
@@ -115,6 +117,7 @@ const stepComponents = [
   markRaw(Step2Company),
   markRaw(Step3CustomsAuth),
   markRaw(Step4TaxRebate),
+  markRaw(Step5Forecast),
 ]
 
 const currentStepComponent = computed(() => stepComponents[currentStep.value])
@@ -186,7 +189,7 @@ async function nextStep() {
   saving.value = true
   try {
     await saveCurrentStep()
-    if (currentStep.value < 4) {
+    if (currentStep.value < 5) {
       currentStep.value++
       loadStepData()
     }

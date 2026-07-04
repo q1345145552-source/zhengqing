@@ -179,15 +179,41 @@ const Submission = {
 
   async saveStep5(submissionId, data) {
     const result = await query(
-      `INSERT INTO submission_shipments (submission_id, confirmed, tracking_number)
-       VALUES ($1, $2, $3)
+      `INSERT INTO submission_shipments (
+         submission_id, confirmed, tracking_number,
+         route, volume, weight, domestic_logistics,
+         need_form_e, need_china_customs, need_thai_customs,
+         pallet_count, wooden_box_cbm
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (submission_id) DO UPDATE SET
          confirmed = COALESCE($2, submission_shipments.confirmed),
          tracking_number = COALESCE($3, submission_shipments.tracking_number),
+         route = COALESCE($4, submission_shipments.route),
+         volume = COALESCE($5, submission_shipments.volume),
+         weight = COALESCE($6, submission_shipments.weight),
+         domestic_logistics = COALESCE($7, submission_shipments.domestic_logistics),
+         need_form_e = COALESCE($8, submission_shipments.need_form_e),
+         need_china_customs = COALESCE($9, submission_shipments.need_china_customs),
+         need_thai_customs = COALESCE($10, submission_shipments.need_thai_customs),
+         pallet_count = COALESCE($11, submission_shipments.pallet_count),
+         wooden_box_cbm = COALESCE($12, submission_shipments.wooden_box_cbm),
          shipped_at = CASE WHEN EXCLUDED.confirmed = true AND submission_shipments.shipped_at IS NULL THEN CURRENT_TIMESTAMP ELSE submission_shipments.shipped_at END,
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, data.confirmed || false, data.tracking_number || null]
+      [
+        submissionId,
+        data.confirmed || false,
+        data.tracking_number || null,
+        data.route || null,
+        data.volume || null,
+        data.weight || null,
+        data.domestic_logistics || null,
+        data.need_form_e || false,
+        data.need_china_customs || false,
+        data.need_thai_customs || false,
+        data.pallet_count || 0,
+        data.wooden_box_cbm || 0,
+      ]
     );
     return result.rows[0];
   },

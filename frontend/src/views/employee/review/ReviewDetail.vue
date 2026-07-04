@@ -646,6 +646,16 @@ async function loadDetail() {
     } catch { /* ignore */ }
     // 回填 Form E
     freightParams.need_form_e = data.step1?.form_e_eligible || false
+
+    // 回填客户预报单数据（自动加载到费用Tab，员工只需核对调整）
+    if (data.step5?.route) freightParams.route = data.step5.route
+    if (data.step5?.volume !== null && data.step5?.volume !== undefined) freightParams.volume = data.step5.volume
+    if (data.step5?.weight !== null && data.step5?.weight !== undefined) freightParams.weight = data.step5.weight
+    if (data.step5?.domestic_logistics) freightParams.domestic_logistics = data.step5.domestic_logistics
+    if (data.step5?.need_form_e) freightParams.need_form_e = data.step5.need_form_e
+    if (data.step5?.pallet_count) freightParams.pallet_count = data.step5.pallet_count
+    if (data.step5?.wooden_box_cbm) freightParams.wooden_box_cbm = parseFloat(data.step5.wooden_box_cbm) || 0
+
     // 回填已有的确认信息
     if (step1.value) {
       reviewForm.hs_code = step1.value.hs_code || ''
