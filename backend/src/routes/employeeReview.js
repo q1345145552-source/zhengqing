@@ -229,6 +229,16 @@ router.get('/submissions/:id/license-docs', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
 });
 
+// 批次号保存（独立接口，不依赖费用计算）
+router.put('/submissions/:id/batch-number', async (req, res) => {
+  try {
+    const { batch_number } = req.body;
+    const { query } = require('../db');
+    await query('UPDATE submissions SET batch_number = $1 WHERE id = $2', [batch_number || null, req.params.id]);
+    res.json({ code: 200, message: '批次号已保存', data: { batch_number: batch_number || null } });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
 // 扣款历史（员工查看所有）
 router.get('/charge-history', async (req, res) => {
   try {

@@ -192,6 +192,16 @@
             <el-descriptions-item label="运单号">{{ data?.tracking_number || '-' }}</el-descriptions-item>
             <el-descriptions-item label="发货时间">{{ formatDate(data?.shipped_at) }}</el-descriptions-item>
           </el-descriptions>
+
+          <h4 style="margin-top:14px">批次号</h4>
+          <el-descriptions :column="1" border size="small">
+            <el-descriptions-item label="Next给的批次号">
+              <div style="display:flex;align-items:center;gap:8px">
+                <el-input v-model="batchNumberForm.value" size="small" placeholder="填写 Next 给的批次号" style="width:240px" />
+                <el-button type="primary" size="small" :loading="batchNumberSaving" @click="saveBatchNumber">保存</el-button>
+              </div>
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
       </el-tab-pane>
 
@@ -222,9 +232,6 @@
             <el-form-item label="托盘数"><el-input-number v-model="freightParams.pallet_count" :min="0" size="small" /></el-form-item>
             <el-form-item label="木箱CBM"><el-input-number v-model="freightParams.wooden_box_cbm" :min="0" :step="0.1" :precision="2" size="small" /></el-form-item>
             <el-form-item label="入仓日期"><el-date-picker v-model="freightParams.warehouse_entry_date" type="date" size="small" placeholder="选择日期" value-format="YYYY-MM-DD" style="width:140px" /></el-form-item>
-            <el-form-item label="批次号">
-              <el-input v-model="freightParams.batch_number" size="small" placeholder="Next 给的批次号" style="width:180px" @input="markDirty" />
-            </el-form-item>
             <el-form-item>
               <el-button type="primary" size="small" :loading="calcLoading" @click="handleCalculate">计算费用</el-button>
               <span v-if="saveStatus === 'saving'" style="margin-left:8px;font-size:12px;color:#E6A23C"><el-icon class="is-loading"><Loading /></el-icon> 保存中</span>
@@ -572,11 +579,22 @@ const serviceTotal = computed(() => serviceCharges.value.filter(c => c.selected)
 function recalcTotal() {
   totalAmount.value = (parseFloat(transportTotal.value) + parseFloat(serviceTotal.value)).toFixed(2)
 }
-const freightParams = reactive({ route: 'nanning_bangkok', domestic_logistics: '', volume: 0, weight: 0, pallet_count: 0, wooden_box_cbm: 0, need_form_e: false, warehouse_entry_date: '', batch_number: '' })
+const freightParams = reactive({ route: 'nanning_bangkok', domestic_logistics: '', volume: 0, weight: 0, pallet_count: 0, wooden_box_cbm: 0, need_form_e: false, warehouse_entry_date: '' })
 const charges = ref([])
 const totalAmount = ref(0)
 const chargeLog = ref(null)
 const balanceInfo = reactive({ balance: 0, sufficient: true, total_amount: 0 })
+const batchNumberForm = reactive({ value: '' })
+const batchNumberSaving = ref(false)
+async function saveBatchNumber() {
+  batchNumberSaving.value = true
+  try {
+    await request.put('/employee/submissions/' + data.id + '/batch-number', { batch_number: batchNumberForm.value })
+    data.batch_number = batchNumberForm.value
+    ElMessage.success('批次号已保存')
+  } catch { ElMessage.error('保存失败') }
+  finally { batchNumberSaving.value = false }
+}
 const calcLoading = ref(false)
 const balanceLoading = ref(false)
 const warehouse = ref(null)
@@ -637,6 +655,7 @@ async function loadDetail() {
       reviewForm.license_type = data.license_type || step1.value.license_type || ''
     }
     nextForm.next_account = data.next_account || ''
+    batchNumberForm.value = data.batch_number || ''
     nextForm.register_status = data.next_register_status || ''
   } catch { router.push('/employee/review') }
   finally { loading.value = false }
