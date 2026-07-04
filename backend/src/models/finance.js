@@ -225,6 +225,7 @@ const Finance = {
       }
       if (logistics) await query('UPDATE submissions SET domestic_logistics = $1 WHERE id = $2', [logistics, submissionId]);
       if (route) await query('UPDATE submissions SET international_route = $1 WHERE id = $2', [route, submissionId]);
+      if (params.batch_number !== undefined) await query('UPDATE submissions SET batch_number = $1 WHERE id = $2', [params.batch_number || null, submissionId]);
       if (entryDate) {
         const e = new Date(entryDate); const n = new Date();
         const days = Math.max(0, Math.floor((n - e) / (1000 * 60 * 60 * 24)));

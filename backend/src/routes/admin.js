@@ -294,7 +294,7 @@ router.put('/customers/:id/status', async (req, res) => {
 // ==================== 产品白名单 / 仓库 / 资料模板（字段白名单防SQL注入） ====================
 const TABLE_COLUMNS = {
   product_whitelist: ['product_name', 'hs_code', 'category', 'tariff_rate', 'notes', 'is_active'],
-  warehouses: ['name', 'address', 'contact_person', 'contact_phone', 'notes', 'is_active'],
+  warehouses: ['name', 'address', 'address_prev', 'address_next', 'contact_person', 'contact_phone', 'notes', 'is_active'],
   doc_templates: ['name', 'description', 'cargo_type', 'sort_order', 'is_required', 'notes'],
 };
 

@@ -28,7 +28,12 @@
       <template #title><span style="font-weight:700">收货仓库地址 — 请自行发货至以下地址</span></template>
       <div class="warehouse-info">
         <div><strong>{{ warehouse.name }}</strong></div>
-        <div>{{ warehouse.address }}</div>
+        <div>
+          <template v-if="warehouse.address_prev && data.batch_number && warehouse.address_next">
+            {{ warehouse.address_prev }} <span style="color:#E6A23C;font-weight:700;font-size:16px">{{ data.batch_number }}</span> {{ warehouse.address_next }}
+          </template>
+          <template v-else>{{ warehouse.address || (warehouse.address_prev || '') + (warehouse.address_next || '') }}</template>
+        </div>
         <div>联系人：{{ warehouse.contact_person }}　电话：{{ warehouse.contact_phone }}</div>
         <div v-if="warehouse.notes" style="color:#909399;font-size:12px;margin-top:4px">{{ warehouse.notes }}</div>
       </div>

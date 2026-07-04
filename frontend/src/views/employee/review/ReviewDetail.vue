@@ -222,6 +222,9 @@
             <el-form-item label="托盘数"><el-input-number v-model="freightParams.pallet_count" :min="0" size="small" /></el-form-item>
             <el-form-item label="木箱CBM"><el-input-number v-model="freightParams.wooden_box_cbm" :min="0" :step="0.1" :precision="2" size="small" /></el-form-item>
             <el-form-item label="入仓日期"><el-date-picker v-model="freightParams.warehouse_entry_date" type="date" size="small" placeholder="选择日期" value-format="YYYY-MM-DD" style="width:140px" /></el-form-item>
+            <el-form-item label="批次号">
+              <el-input v-model="freightParams.batch_number" size="small" placeholder="Next 给的批次号" style="width:180px" @input="markDirty" />
+            </el-form-item>
             <el-form-item>
               <el-button type="primary" size="small" :loading="calcLoading" @click="handleCalculate">计算费用</el-button>
               <span v-if="saveStatus === 'saving'" style="margin-left:8px;font-size:12px;color:#E6A23C"><el-icon class="is-loading"><Loading /></el-icon> 保存中</span>
@@ -569,7 +572,7 @@ const serviceTotal = computed(() => serviceCharges.value.filter(c => c.selected)
 function recalcTotal() {
   totalAmount.value = (parseFloat(transportTotal.value) + parseFloat(serviceTotal.value)).toFixed(2)
 }
-const freightParams = reactive({ route: 'nanning_bangkok', domestic_logistics: '', volume: 0, weight: 0, pallet_count: 0, wooden_box_cbm: 0, need_form_e: false, warehouse_entry_date: '' })
+const freightParams = reactive({ route: 'nanning_bangkok', domestic_logistics: '', volume: 0, weight: 0, pallet_count: 0, wooden_box_cbm: 0, need_form_e: false, warehouse_entry_date: '', batch_number: '' })
 const charges = ref([])
 const totalAmount = ref(0)
 const chargeLog = ref(null)
