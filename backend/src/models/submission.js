@@ -97,19 +97,16 @@ const Submission = {
   // ========== 阶段1：产品信息 ==========
 
   async saveStep1(submissionId, data) {
-    const n = (v) => v !== undefined ? (v === '__NULL__' ? '__NULL__' : v) : null;
     const result = await query(
       `INSERT INTO submission_products (submission_id, product_images, thai_name, english_name)
        VALUES ($1, $2::jsonb, $3, $4)
        ON CONFLICT (submission_id) DO UPDATE SET
          product_images = COALESCE($2::jsonb, submission_products.product_images),
-         thai_name = CASE WHEN $3 = '__NULL__' THEN NULL WHEN $3 IS NOT NULL THEN $3 ELSE submission_products.thai_name END,
-         english_name = CASE WHEN $4 = '__NULL__' THEN NULL WHEN $4 IS NOT NULL THEN $4 ELSE submission_products.english_name END,
+         thai_name = COALESCE($3, submission_products.thai_name),
+         english_name = COALESCE($4, submission_products.english_name),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId,
-       data.product_images !== undefined ? JSON.stringify(data.product_images) : null,
-       n(data.thai_name), n(data.english_name)]
+      [submissionId, JSON.stringify(data.product_images || []), data.thai_name || null, data.english_name || null]
     );
     return result.rows[0];
   },
@@ -117,7 +114,6 @@ const Submission = {
   // ========== 阶段2：公司资料 ==========
 
   async saveStep2(submissionId, data) {
-    const n = (v) => v !== undefined ? (v === '__NULL__' ? '__NULL__' : v) : null;
     const result = await query(
       `INSERT INTO submission_company_docs (
          submission_id, dbd_file, pp20_file, company_stamp_file,
@@ -128,10 +124,10 @@ const Submission = {
          pp20_file = COALESCE($3, submission_company_docs.pp20_file),
          company_stamp_file = COALESCE($4, submission_company_docs.company_stamp_file),
          director_passport_file = COALESCE($5, submission_company_docs.director_passport_file),
-         thai_address = CASE WHEN $6 = '__NULL__' THEN NULL WHEN $6 IS NOT NULL THEN $6 ELSE submission_company_docs.thai_address END,
+         thai_address = COALESCE($6, submission_company_docs.thai_address),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, data.dbd_file || null, data.pp20_file || null, data.company_stamp_file || null, data.director_passport_file || null, n(data.thai_address)]
+      [submissionId, data.dbd_file || null, data.pp20_file || null, data.company_stamp_file || null, data.director_passport_file || null, data.thai_address || null]
     );
     return result.rows[0];
   },
@@ -139,21 +135,20 @@ const Submission = {
   // ========== 阶段3：报关授权 ==========
 
   async saveStep3(submissionId, data) {
-    const n = (v) => v !== undefined ? (v === '__NULL__' ? '__NULL__' : v) : null;
     const result = await query(
       `INSERT INTO submission_customs_auth (
          submission_id, handler_type, power_of_attorney_file,
          pp20_signed_file, dbd_signed_file, has_director_passport_original
        ) VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (submission_id) DO UPDATE SET
-         handler_type = CASE WHEN $2 = '__NULL__' THEN NULL WHEN $2 IS NOT NULL THEN $2 ELSE submission_customs_auth.handler_type END,
+         handler_type = COALESCE($2, submission_customs_auth.handler_type),
          power_of_attorney_file = COALESCE($3, submission_customs_auth.power_of_attorney_file),
          pp20_signed_file = COALESCE($4, submission_customs_auth.pp20_signed_file),
          dbd_signed_file = COALESCE($5, submission_customs_auth.dbd_signed_file),
          has_director_passport_original = COALESCE($6, submission_customs_auth.has_director_passport_original),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, n(data.handler_type), data.power_of_attorney_file || null, data.pp20_signed_file || null, data.dbd_signed_file || null, data.has_director_passport_original || false]
+      [submissionId, data.handler_type || 'director', data.power_of_attorney_file || null, data.pp20_signed_file || null, data.dbd_signed_file || null, data.has_director_passport_original || false]
     );
     return result.rows[0];
   },
@@ -161,7 +156,6 @@ const Submission = {
   // ========== 阶段4：退税 ==========
 
   async saveStep4(submissionId, data) {
-    const n = (v) => v !== undefined ? (v === '__NULL__' ? '__NULL__' : v) : null;
     const result = await query(
       `INSERT INTO submission_tax_rebate (
          submission_id, need_rebate, customs_company_name,
@@ -169,14 +163,14 @@ const Submission = {
        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (submission_id) DO UPDATE SET
          need_rebate = COALESCE($2, submission_tax_rebate.need_rebate),
-         customs_company_name = CASE WHEN $3 = '__NULL__' THEN NULL WHEN $3 IS NOT NULL THEN $3 ELSE submission_tax_rebate.customs_company_name END,
-         logistics_contact = CASE WHEN $4 = '__NULL__' THEN NULL WHEN $4 IS NOT NULL THEN $4 ELSE submission_tax_rebate.logistics_contact END,
-         logistics_code = CASE WHEN $5 = '__NULL__' THEN NULL WHEN $5 IS NOT NULL THEN $5 ELSE submission_tax_rebate.logistics_code END,
+         customs_company_name = COALESCE($3, submission_tax_rebate.customs_company_name),
+         logistics_contact = COALESCE($4, submission_tax_rebate.logistics_contact),
+         logistics_code = COALESCE($5, submission_tax_rebate.logistics_code),
          invoice_file = COALESCE($6, submission_tax_rebate.invoice_file),
          packing_list_file = COALESCE($7, submission_tax_rebate.packing_list_file),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, data.need_rebate || false, n(data.customs_company_name), n(data.logistics_contact), n(data.logistics_code), data.invoice_file || null, data.packing_list_file || null]
+      [submissionId, data.need_rebate || false, data.customs_company_name || null, data.logistics_contact || null, data.logistics_code || null, data.invoice_file || null, data.packing_list_file || null]
     );
     return result.rows[0];
   },
@@ -184,17 +178,16 @@ const Submission = {
   // ========== 阶段5：发货 ==========
 
   async saveStep5(submissionId, data) {
-    const n = (v) => v !== undefined ? (v === '__NULL__' ? '__NULL__' : v) : null;
     const result = await query(
       `INSERT INTO submission_shipments (submission_id, confirmed, tracking_number)
        VALUES ($1, $2, $3)
        ON CONFLICT (submission_id) DO UPDATE SET
          confirmed = COALESCE($2, submission_shipments.confirmed),
-         tracking_number = CASE WHEN $3 = '__NULL__' THEN NULL WHEN $3 IS NOT NULL THEN $3 ELSE submission_shipments.tracking_number END,
-         shipped_at = CASE WHEN $2::boolean = true AND submission_shipments.shipped_at IS NULL THEN CURRENT_TIMESTAMP ELSE submission_shipments.shipped_at END,
+         tracking_number = COALESCE($3, submission_shipments.tracking_number),
+         shipped_at = CASE WHEN EXCLUDED.confirmed = true AND submission_shipments.shipped_at IS NULL THEN CURRENT_TIMESTAMP ELSE submission_shipments.shipped_at END,
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, data.confirmed || false, n(data.tracking_number)]
+      [submissionId, data.confirmed || false, data.tracking_number || null]
     );
     return result.rows[0];
   },
