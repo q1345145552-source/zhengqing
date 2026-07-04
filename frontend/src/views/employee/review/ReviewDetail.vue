@@ -195,7 +195,8 @@
 
           <h4 style="margin-top:14px">批次号</h4>
           <el-descriptions :column="1" border size="small">
-            <el-descriptions-item label="Next给的批次号">
+            <el-descriptions-item>
+              <template #label>Next给的批次号 <el-tag type="warning" size="small" style="margin-left:6px">填完后客户才能看到仓库地址</el-tag></template>
               <div style="display:flex;align-items:center;gap:8px">
                 <el-input v-model="batchNumberForm.value" size="small" placeholder="填写 Next 给的批次号" style="width:240px" />
                 <el-button type="primary" size="small" :loading="batchNumberSaving" @click="saveBatchNumber">保存</el-button>

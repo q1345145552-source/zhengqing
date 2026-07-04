@@ -24,7 +24,7 @@
     </div>
 
     <!-- 收货仓库地址 -->
-    <el-alert v-if="warehouse" type="info" :closable="false" show-icon style="margin-bottom:16px">
+    <el-alert v-if="warehouse && data.batch_number" type="info" :closable="false" show-icon style="margin-bottom:16px">
       <template #title><span style="font-weight:700">收货仓库地址 — 请自行发货至以下地址</span></template>
       <div class="warehouse-info">
         <div><strong>{{ warehouse.name }}</strong></div>
@@ -37,6 +37,11 @@
         <div>联系人：{{ warehouse.contact_person }}　电话：{{ warehouse.contact_phone }}</div>
         <div v-if="warehouse.notes" style="color:#909399;font-size:12px;margin-top:4px">{{ warehouse.notes }}</div>
       </div>
+    </el-alert>
+    <!-- 仓库地址待确认：已审核通过但批次号未填 -->
+    <el-alert v-else-if="data.tracking_status >= 2" type="warning" :closable="false" show-icon style="margin-bottom:16px">
+      <template #title><span style="font-weight:700">仓库地址待确认</span></template>
+      员工正在为您分配仓库，填完批次号后将显示收货仓库地址。
     </el-alert>
 
     <!-- 发货信息 -->
