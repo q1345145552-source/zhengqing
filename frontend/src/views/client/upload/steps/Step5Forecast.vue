@@ -51,14 +51,14 @@
       </el-form-item>
 
       <el-divider content-position="left">
-        <el-tag type="warning" size="small">附加服务（可选）</el-tag>
+        <el-tag type="warning" size="small">附加服务</el-tag>
       </el-divider>
 
       <el-form-item label="">
         <el-checkbox-group v-model="form.services" @change="emitUpdate">
           <el-checkbox label="form_e" style="margin-right:24px">Form E 产地证 (4,000 ฿)</el-checkbox>
-          <el-checkbox label="china_customs" style="margin-right:24px">中国清关费 (4,000 ฿)</el-checkbox>
-          <el-checkbox label="thai_customs" style="margin-right:24px">泰国清关费 (3,500 ฿)</el-checkbox>
+          <el-checkbox v-if="props.needRebate" label="china_customs" style="margin-right:24px" :disabled="true">中国清关费 (4,000 ฿) <el-tag type="danger" size="small" style="margin-left:4px">必选</el-tag></el-checkbox>
+          <el-checkbox label="thai_customs" style="margin-right:24px" :disabled="true">泰国清关费 (3,500 ฿) <el-tag type="danger" size="small" style="margin-left:4px">必选</el-tag></el-checkbox>
           <el-checkbox label="pallet">打托盘费 (1,800 ฿)</el-checkbox>
           <el-checkbox label="wooden_box">木箱打包费 (2,500 ฿)</el-checkbox>
         </el-checkbox-group>
@@ -90,6 +90,7 @@ import request from '@/api/request'
 const props = defineProps({
   submissionId: { type: Number, default: null },
   formData: { type: Object, default: () => ({}) },
+  needRebate: { type: Boolean, default: null },
 })
 const emit = defineEmits(['update'])
 
@@ -108,8 +109,14 @@ const form = reactive({
 
 // 回填 services 勾选
 if (props.formData?.need_form_e) form.services.push('form_e')
-if (props.formData?.need_china_customs) form.services.push('china_customs')
-if (props.formData?.need_thai_customs) form.services.push('thai_customs')
+// 泰国清关费始终必选
+if (!form.services.includes('thai_customs')) form.services.push('thai_customs')
+form.need_thai_customs = true
+// 中国清关费仅在需要退税时显示并必选
+if (props.needRebate) {
+  if (!form.services.includes('china_customs')) form.services.push('china_customs')
+  form.need_china_customs = true
+}
 if (props.formData?.pallet_count > 0) form.services.push('pallet')
 if (props.formData?.wooden_box_cbm > 0) form.services.push('wooden_box')
 
@@ -120,8 +127,8 @@ watch(() => props.formData, (newVal) => {
   if (newVal.weight !== undefined) form.weight = newVal.weight || null
   if (newVal.domestic_logistics !== undefined) form.domestic_logistics = newVal.domestic_logistics || ''
   if (newVal.need_form_e !== undefined) { form.need_form_e = newVal.need_form_e; if (newVal.need_form_e && !form.services.includes('form_e')) form.services.push('form_e') }
-  if (newVal.need_china_customs !== undefined) { form.need_china_customs = newVal.need_china_customs; if (newVal.need_china_customs && !form.services.includes('china_customs')) form.services.push('china_customs') }
-  if (newVal.need_thai_customs !== undefined) { form.need_thai_customs = newVal.need_thai_customs; if (newVal.need_thai_customs && !form.services.includes('thai_customs')) form.services.push('thai_customs') }
+  if (newVal.need_china_customs !== undefined && props.needRebate) { form.need_china_customs = true; if (!form.services.includes('china_customs')) form.services.push('china_customs') }
+  if (newVal.need_thai_customs !== undefined) { form.need_thai_customs = true; if (!form.services.includes('thai_customs')) form.services.push('thai_customs') }
   if (newVal.pallet_count !== undefined) form.pallet_count = newVal.pallet_count || 0
   if (newVal.wooden_box_cbm !== undefined) form.wooden_box_cbm = newVal.wooden_box_cbm || 0
 }, { deep: true, immediate: false })
@@ -137,11 +144,18 @@ watch(() => form.route, async (routeVal) => {
 })
 
 function emitUpdate() {
+  // 确保必选项不被取消
+  if (!form.services.includes('thai_customs')) form.services.push('thai_customs')
+  if (props.needRebate && !form.services.includes('china_customs')) form.services.push('china_customs')
+  if (!props.needRebate) {
+    const idx = form.services.indexOf('china_customs')
+    if (idx > -1) form.services.splice(idx, 1)
+  }
   emit('update', {
     ...form,
     need_form_e: form.services.includes('form_e'),
-    need_china_customs: form.services.includes('china_customs'),
-    need_thai_customs: form.services.includes('thai_customs'),
+    need_china_customs: props.needRebate ? true : false,
+    need_thai_customs: true,
     pallet_count: form.services.includes('pallet') ? form.pallet_count : 0,
     wooden_box_cbm: form.services.includes('wooden_box') ? form.wooden_box_cbm : 0,
   })
@@ -154,11 +168,18 @@ const rules = {
 }
 
 function getFormData() {
+  // 确保必选项不被取消
+  if (!form.services.includes('thai_customs')) form.services.push('thai_customs')
+  if (props.needRebate && !form.services.includes('china_customs')) form.services.push('china_customs')
+  if (!props.needRebate) {
+    const idx = form.services.indexOf('china_customs')
+    if (idx > -1) form.services.splice(idx, 1)
+  }
   return {
     ...form,
     need_form_e: form.services.includes('form_e'),
-    need_china_customs: form.services.includes('china_customs'),
-    need_thai_customs: form.services.includes('thai_customs'),
+    need_china_customs: props.needRebate ? true : false,
+    need_thai_customs: true,
     pallet_count: form.services.includes('pallet') ? form.pallet_count : 0,
     wooden_box_cbm: form.services.includes('wooden_box') ? form.wooden_box_cbm : 0,
   }

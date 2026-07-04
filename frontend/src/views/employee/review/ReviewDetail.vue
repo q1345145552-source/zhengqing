@@ -292,7 +292,9 @@
               <el-table-column label="单价" width="100"><template #default="{row}">฿{{ row.unit_price }}</template></el-table-column>
               <el-table-column label="金额" width="120"><template #default="{row}">฿{{ row.amount }}</template></el-table-column>
               <el-table-column v-if="data.review_status !== 'registered'" label="勾选" width="80">
-                <template #default="{row}"><el-switch v-model="row.selected" size="small" @change="recalcTotalWithSave" /></template>
+                <template #default="{row}">
+                  <el-switch v-model="row.selected" size="small" :disabled="row.fee_type === 'thai_customs' || (row.fee_type === 'china_customs' && step4?.need_rebate)" @change="recalcTotalWithSave" />
+                </template>
               </el-table-column>
             </el-table>
             <div style="text-align:right;margin-top:8px;font-size:15px;font-weight:600;color:#E6A23C">附加服务合计: ฿{{ serviceTotal }}</div>
@@ -574,7 +576,19 @@ const storageCharges = computed(() => charges.value.filter(c => c.fee_type === '
 const storageAmount = computed(() => storageCharges.value.filter(c => c.selected).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0))
 const otherTransportCharges = computed(() => charges.value.filter(c => !c.is_optional && c.fee_type !== 'freight_cbm' && c.fee_type !== 'freight_kg' && c.fee_type !== 'freight_max_note'))
 const transportCharges = computed(() => charges.value.filter(c => !c.is_optional))
-const serviceCharges = computed(() => charges.value.filter(c => c.is_optional))
+const serviceCharges = computed(() => {
+  let list = charges.value.filter(c => c.is_optional)
+  // 中国清关费：仅需要退税时显示
+  if (!step4.value?.need_rebate) {
+    list = list.filter(c => c.fee_type !== 'china_customs')
+  }
+  // 泰国清关费始终必选，中国清关费(需要退税时)必选
+  list.forEach(c => {
+    if (c.fee_type === 'thai_customs') c.selected = true
+    if (c.fee_type === 'china_customs' && step4.value?.need_rebate) c.selected = true
+  })
+  return list
+})
 const transportTotal = computed(() => transportCharges.value.filter(c => c.selected).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0).toFixed(2))
 const serviceTotal = computed(() => serviceCharges.value.filter(c => c.selected).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0).toFixed(2))
 function recalcTotal() {

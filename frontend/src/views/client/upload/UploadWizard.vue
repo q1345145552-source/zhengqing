@@ -33,6 +33,7 @@
         :ref="setStepRef"
         :submission-id="submission?.id"
         :form-data="stepData"
+        :need-rebate="allStepData[4]?.need_rebate ?? submission?.step4?.need_rebate"
         @update="handleStepUpdate"
       />
     </div>
