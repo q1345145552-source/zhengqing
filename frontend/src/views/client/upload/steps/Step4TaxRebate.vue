@@ -65,45 +65,50 @@
             我们会协助完成产品备案，只需提供以下两个文件即可。
           </p>
         </el-alert>
-
-        <el-form-item label="商业发票（Invoice）" required>
-          <div class="upload-row">
-            <el-button type="primary" plain @click="$refs.invoiceInput.click()" :disabled="uploading">
-              <el-icon><Upload /></el-icon> 上传 Invoice
-            </el-button>
-            <span v-if="form.invoice_file" class="file-status uploaded">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.invoice_file.original_name || '已上传' }}
-            </span>
-            <input
-              ref="invoiceInput"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              hidden
-              @change="(e) => handleFileChange(e, 'invoice_file')"
-            />
-          </div>
-        </el-form-item>
-
-        <el-form-item label="装箱单（Packing List）" required>
-          <div class="upload-row">
-            <el-button type="primary" plain @click="$refs.plInput.click()" :disabled="uploading">
-              <el-icon><Upload /></el-icon> 上传 Packing List
-            </el-button>
-            <span v-if="form.packing_list_file" class="file-status uploaded">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.packing_list_file.original_name || '已上传' }}
-            </span>
-            <input
-              ref="plInput"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              hidden
-              @change="(e) => handleFileChange(e, 'packing_list_file')"
-            />
-          </div>
-        </el-form-item>
       </template>
+
+      <!-- ===== 发票和装箱单（无论是否退税都需要） ===== -->
+      <el-divider content-position="left">
+        <el-tag type="warning" size="small">必传文件</el-tag>
+      </el-divider>
+
+      <el-form-item label="商业发票（Invoice）" required>
+        <div class="upload-row">
+          <el-button type="primary" plain @click="$refs.invoiceInput.click()" :disabled="uploading">
+            <el-icon><Upload /></el-icon> 上传 Invoice
+          </el-button>
+          <span v-if="form.invoice_file" class="file-status uploaded">
+            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+            {{ form.invoice_file.original_name || '已上传' }}
+          </span>
+          <input
+            ref="invoiceInput"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            hidden
+            @change="(e) => handleFileChange(e, 'invoice_file')"
+          />
+        </div>
+      </el-form-item>
+
+      <el-form-item label="装箱单（Packing List）" required>
+        <div class="upload-row">
+          <el-button type="primary" plain @click="$refs.plInput.click()" :disabled="uploading">
+            <el-icon><Upload /></el-icon> 上传 Packing List
+          </el-button>
+          <span v-if="form.packing_list_file" class="file-status uploaded">
+            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+            {{ form.packing_list_file.original_name || '已上传' }}
+          </span>
+          <input
+            ref="plInput"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            hidden
+            @change="(e) => handleFileChange(e, 'packing_list_file')"
+          />
+        </div>
+      </el-form-item>
     </el-form>
   </div>
 </template>
@@ -147,11 +152,8 @@ function emitUpdate() {
 }
 
 function handleRebateChange() {
-  // 切换退税选项时，清空另一方案的数据
-  if (form.need_rebate) {
-    form.invoice_file = null
-    form.packing_list_file = null
-  } else {
+  // 切换退税选项时，清空另一方案的数据（发票和装箱单两种方案都需要，不清空）
+  if (!form.need_rebate) {
     form.customs_company_name = ''
     form.logistics_contact = ''
     form.logistics_code = ''
@@ -190,6 +192,8 @@ var rules = {
   need_rebate: [{ required: true, message: '请选择退税类型', trigger: 'change', validator: function(rule, value, cb) { if (value === null || value === undefined) cb(new Error('请选择是否需要退税')); else cb(); } }],
   customs_company_name: [{ required: true, message: '请输入报关公司名称', trigger: 'blur' }],
   logistics_code: [{ required: true, message: '请输入物流编码', trigger: 'blur' }],
+  invoice_file: [{ required: true, message: '请上传商业发票', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传商业发票')); else cb(); } }],
+  packing_list_file: [{ required: true, message: '请上传装箱单', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传装箱单')); else cb(); } }],
 };
 
 function getFormData() {
