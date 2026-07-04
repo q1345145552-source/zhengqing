@@ -150,10 +150,10 @@ const Submission = {
          power_of_attorney_file = COALESCE($3, submission_customs_auth.power_of_attorney_file),
          pp20_signed_file = COALESCE($4, submission_customs_auth.pp20_signed_file),
          dbd_signed_file = COALESCE($5, submission_customs_auth.dbd_signed_file),
-         has_director_passport_original = CASE WHEN $6 = '__NULL__' THEN NULL WHEN $6 IS NOT NULL THEN $6::boolean ELSE submission_customs_auth.has_director_passport_original END,
+         has_director_passport_original = COALESCE($6, submission_customs_auth.has_director_passport_original),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, n(data.handler_type), data.power_of_attorney_file || null, data.pp20_signed_file || null, data.dbd_signed_file || null, n(data.has_director_passport_original)]
+      [submissionId, n(data.handler_type), data.power_of_attorney_file || null, data.pp20_signed_file || null, data.dbd_signed_file || null, data.has_director_passport_original || false]
     );
     return result.rows[0];
   },
@@ -168,7 +168,7 @@ const Submission = {
          logistics_contact, logistics_code, invoice_file, packing_list_file
        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (submission_id) DO UPDATE SET
-         need_rebate = CASE WHEN $2 = '__NULL__' THEN NULL WHEN $2 IS NOT NULL THEN $2::boolean ELSE submission_tax_rebate.need_rebate END,
+         need_rebate = COALESCE($2, submission_tax_rebate.need_rebate),
          customs_company_name = CASE WHEN $3 = '__NULL__' THEN NULL WHEN $3 IS NOT NULL THEN $3 ELSE submission_tax_rebate.customs_company_name END,
          logistics_contact = CASE WHEN $4 = '__NULL__' THEN NULL WHEN $4 IS NOT NULL THEN $4 ELSE submission_tax_rebate.logistics_contact END,
          logistics_code = CASE WHEN $5 = '__NULL__' THEN NULL WHEN $5 IS NOT NULL THEN $5 ELSE submission_tax_rebate.logistics_code END,
@@ -176,7 +176,7 @@ const Submission = {
          packing_list_file = COALESCE($7, submission_tax_rebate.packing_list_file),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, n(data.need_rebate), n(data.customs_company_name), n(data.logistics_contact), n(data.logistics_code), data.invoice_file || null, data.packing_list_file || null]
+      [submissionId, data.need_rebate || false, n(data.customs_company_name), n(data.logistics_contact), n(data.logistics_code), data.invoice_file || null, data.packing_list_file || null]
     );
     return result.rows[0];
   },
@@ -189,12 +189,12 @@ const Submission = {
       `INSERT INTO submission_shipments (submission_id, confirmed, tracking_number)
        VALUES ($1, $2, $3)
        ON CONFLICT (submission_id) DO UPDATE SET
-         confirmed = CASE WHEN $2 = '__NULL__' THEN NULL WHEN $2 IS NOT NULL THEN $2::boolean ELSE submission_shipments.confirmed END,
+         confirmed = COALESCE($2, submission_shipments.confirmed),
          tracking_number = CASE WHEN $3 = '__NULL__' THEN NULL WHEN $3 IS NOT NULL THEN $3 ELSE submission_shipments.tracking_number END,
          shipped_at = CASE WHEN $2::boolean = true AND submission_shipments.shipped_at IS NULL THEN CURRENT_TIMESTAMP ELSE submission_shipments.shipped_at END,
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, n(data.confirmed), n(data.tracking_number)]
+      [submissionId, data.confirmed || false, n(data.tracking_number)]
     );
     return result.rows[0];
   },
