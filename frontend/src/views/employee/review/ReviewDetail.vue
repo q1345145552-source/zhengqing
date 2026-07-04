@@ -300,6 +300,20 @@
             <div style="text-align:right;margin-top:8px;font-size:15px;font-weight:600;color:#E6A23C">附加服务合计: ฿{{ serviceTotal }}</div>
           </div>
 
+          <!-- 代垫费用：海关关税 -->
+          <div style="margin-top:20px">
+            <h4>代垫费用 <el-tag type="info" size="small" style="margin-left:6px">实报实销</el-tag></h4>
+            <el-form :model="customsDutyForm" inline>
+              <el-form-item label="海关关税 (฿)">
+                <el-input-number v-model="customsDutyForm.amount" :min="0" :step="100" :precision="2" size="small" style="width:180px" placeholder="根据Next账单填写" />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" size="small" :loading="customsDutySaving" @click="saveCustomsDuty">保存关税</el-button>
+              </el-form-item>
+            </el-form>
+            <div v-if="customsDutyForm.amount > 0" style="text-align:right;font-size:13px;color:#E6A23C">代垫费用: ฿{{ customsDutyForm.amount }}</div>
+          </div>
+
           <!-- 费用汇总 -->
           <div v-if="charges.length > 0" class="summary-section">
             <h4>费用汇总</h4>
@@ -321,9 +335,14 @@
                 <span>{{ parseFloat(serviceTotal).toLocaleString() }} ฿</span>
               </div>
               <el-divider style="margin:8px 0" />
+              <div v-if="customsDutyForm.amount > 0" class="summary-row" style="color:#E6A23C">
+                <span>海关关税（代垫）</span>
+                <span>{{ customsDutyForm.amount.toLocaleString() }} ฿</span>
+              </div>
+              <el-divider v-if="customsDutyForm.amount > 0" style="margin:8px 0" />
               <div class="summary-row summary-row-total">
                 <span>总计</span>
-                <span>{{ parseFloat(totalAmount).toLocaleString() }} ฿</span>
+                <span>{{ (parseFloat(totalAmount) + (customsDutyForm.amount || 0)).toLocaleString() }} ฿</span>
               </div>
             </div>
             <div style="margin-top:16px;display:flex;align-items:center;gap:16px">
@@ -595,6 +614,8 @@ function recalcTotal() {
   totalAmount.value = (parseFloat(transportTotal.value) + parseFloat(serviceTotal.value)).toFixed(2)
 }
 const freightParams = reactive({ route: 'nanning_bangkok', domestic_logistics: '', volume: 0, weight: 0, pallet_count: 0, wooden_box_cbm: 0, need_form_e: false, warehouse_entry_date: '' })
+const customsDutyForm = reactive({ amount: 0 })
+const customsDutySaving = ref(false)
 const charges = ref([])
 const totalAmount = ref(0)
 const chargeLog = ref(null)
@@ -662,6 +683,7 @@ async function loadDetail() {
     // 回填 Form E
     freightParams.need_form_e = data.step1?.form_e_eligible || false
 
+    customsDutyForm.amount = parseFloat(data.customs_duty_amount) || 0
     // 回填客户预报单数据（自动加载到费用Tab，员工只需核对调整）
     if (data.step5?.route) freightParams.route = data.step5.route
     if (data.step5?.volume !== null && data.step5?.volume !== undefined) freightParams.volume = data.step5.volume
@@ -755,6 +777,16 @@ async function handleNextRegister() {
     await loadDetail()
   } catch { /* handled */ }
   finally { registering.value = false }
+}
+
+async function saveCustomsDuty() {
+  if (!data.id) return
+  customsDutySaving.value = true
+  try {
+    await request.put('/finance/employee/submissions/' + data.id + '/customs-duty', { amount: customsDutyForm.amount })
+    ElMessage.success('海关关税已保存')
+  } catch { ElMessage.error('保存失败') }
+  finally { customsDutySaving.value = false }
 }
 
 async function handleCalculate() {

@@ -378,6 +378,16 @@ router.put('/employee/deposit-requests/:id', async (req, res) => {
   } catch (err) { console.error(err); const msg = process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message; res.status(400).json({ code: 400, message: msg }); }
 });
 
+// 员工端 — 保存海关关税金额
+router.put('/employee/submissions/:id/customs-duty', async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const amount = parseFloat(req.body.amount) || 0;
+    await query('UPDATE submissions SET customs_duty_amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [amount, req.params.id]);
+    res.json({ code: 200, message: '海关关税已保存', data: { customs_duty_amount: amount } });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
+});
+
 router.get('/employee/submissions/:id/charges', async (req, res) => {
   try { const data = await Finance.getSubmissionCharges(req.params.id); res.json({ code: 200, data }); }
   catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }

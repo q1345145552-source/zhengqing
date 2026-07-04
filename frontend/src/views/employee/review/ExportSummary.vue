@@ -194,10 +194,16 @@
         </el-table>
         <div v-else class="empty-hint">无附加服务</div>
 
+        <!-- 海关关税（代垫费用） -->
+        <div v-if="(data.customs_duty_amount || 0) > 0" class="customs-duty-bar">
+          <span>海关关税（代垫费用）</span>
+          <span style="font-weight:700;color:#E6A23C;font-size:15px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
+        </div>
+
         <!-- 总计和扣款 -->
         <div class="total-bar">
           <span>总费用</span>
-          <span class="total-amount">{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span>
+          <span class="total-amount">{{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
         </div>
         <div v-if="data.finance?.charge_log">
           <el-alert v-if="data.finance.charge_log.status === 'charged'" type="success" :closable="false" show-icon title="已扣款" :description="'扣款金额: ' + (data.finance.charge_log.total_amount || 0) + ' ฿，时间: ' + fmt(data.finance.charge_log.charged_at)" style="margin-top:8px" />
@@ -360,4 +366,14 @@ function statusLabel(s) {
 }
 .empty-hint { color: #c0c4cc; font-size: 13px; text-align: center; padding: 12px; }
 .empty-page { padding: 60px 0; }
+.customs-duty-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fdf6ec;
+  border: 1px solid #faecd8;
+  border-radius: 6px;
+  margin-top: 16px;
+}
 </style>

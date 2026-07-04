@@ -257,6 +257,7 @@ const EmployeeReview = {
       review_comment: s.review_comment,
       arrived_at_warehouse: s.arrived_at_warehouse,
       batch_number: s.batch_number || null,
+      customs_duty_amount: parseFloat(s.customs_duty_amount) || 0,
       international_route: s.international_route || null,
       tracking_company: s.tracking_company || null,
       tracking_number: s.tracking_number || null,

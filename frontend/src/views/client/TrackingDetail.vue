@@ -17,7 +17,7 @@
         </div>
         <div class="top-numbers">
           <span v-if="data.step1?.tariff_rate">关税 {{ data.step1.tariff_rate }}</span>
-          <span>运费 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span>
+          <span>费用 {{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
         </div>
         <div class="top-time">提交于 {{ fmt(data.created_at) }}</div>
       </div>
@@ -243,7 +243,15 @@
           </el-table>
         </template>
 
-        <div class="total-bar">费用总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
+        <!-- 海关关税（代垫费用） -->
+        <div v-if="(data.customs_duty_amount || 0) > 0" style="margin-top:14px;padding:12px 16px;background:#fdf6ec;border:1px solid #faecd8;border-radius:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span><strong>海关关税</strong> <el-tag type="info" size="small" style="margin-left:6px">代垫费用</el-tag></span>
+            <span style="font-weight:700;color:#E6A23C;font-size:16px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
+          </div>
+        </div>
+
+        <div class="total-bar">费用总计 <span>{{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span></div>
 
         <!-- 扣款记录 -->
         <el-divider style="margin:20px 0" />
@@ -252,7 +260,7 @@
           <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><CircleCheckFilled /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">已扣款</div>
-            <div class="pay-amount">{{ (data.finance.charge_log.total_amount || 0).toLocaleString() }} ฿</div>
+            <div class="pay-amount">{{ ((data.finance.charge_log.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</div>
             <div class="pay-time">扣款时间：{{ fmt(data.finance.charge_log.charged_at) }}</div>
           </div>
         </div>
@@ -260,7 +268,7 @@
           <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">待付款</div>
-            <div class="pay-amount">应付 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</div>
+            <div class="pay-amount">应付 {{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</div>
             <div class="pay-time">货物到达泰国仓库时自动扣款</div>
           </div>
         </div>
