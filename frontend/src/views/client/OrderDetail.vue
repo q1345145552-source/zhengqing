@@ -126,6 +126,10 @@
           <el-table-column label="金额" width="120"><template #default="{row}">{{ row.amount }} ฿</template></el-table-column>
           <el-table-column label="状态" width="70"><template #default="{row}"><el-tag :type="row.selected?'success':'info'" size="small">{{ row.selected?'已选':'未选' }}</el-tag></template></el-table-column>
         </el-table>
+        <div v-if="data.customs_duty_amount !== undefined" style="margin-top:14px;padding:12px 16px;background:#fdf6ec;border:1px solid #faecd8;border-radius:6px">
+          <span style="color:#909399;font-size:13px">海关关税（代垫费用）</span>
+          <span style="font-weight:700;color:#E6A23C;font-size:16px;margin-left:12px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
+        </div>
         <div class="total-bar">费用总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
 
         <!-- 扣款记录 -->

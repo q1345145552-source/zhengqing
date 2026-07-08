@@ -249,7 +249,7 @@
         </template>
 
         <!-- 海关关税（代垫费用） -->
-        <div v-if="(data.customs_duty_amount || 0) > 0" style="margin-top:14px;padding:12px 16px;background:#fdf6ec;border:1px solid #faecd8;border-radius:6px">
+        <div v-if="data.customs_duty_amount !== undefined" style="margin-top:14px;padding:12px 16px;background:#fdf6ec;border:1px solid #faecd8;border-radius:6px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span><strong>海关关税</strong> <el-tag type="info" size="small" style="margin-left:6px">代垫费用</el-tag></span>
             <span style="font-weight:700;color:#E6A23C;font-size:16px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>

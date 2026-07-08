@@ -195,10 +195,15 @@ const Finance = {
       const { rows: [oldSub] } = await query('SELECT domestic_logistics, international_route, warehouse_entry_date FROM submissions WHERE id = $1', [submissionId]);
       const { rows: oldCharges } = await query('SELECT fee_type, selected FROM submission_charges WHERE submission_id = $1', [submissionId]);
       const oldSelected = oldCharges.filter(c => c.selected).map(c => c.fee_type);
+      // 保留旧的勾选状态（员工已勾选过的服务，重新计算时保持勾选）
+      const oldSelectedMap = {};
+      for (const oc of oldCharges) oldSelectedMap[oc.fee_type] = oc.selected;
 
       await query('DELETE FROM submission_charges WHERE submission_id = $1', [submissionId]);
       const newSelected = [];
       for (const c of charges) {
+        // 如果旧数据中该费用已勾选，保留勾选状态（员工手动勾选的不会被重置）
+        if (oldSelectedMap[c.fee_type] === true) c.selected = true;
         await query(
           `INSERT INTO submission_charges (submission_id, fee_type, fee_name, quantity, unit_price, amount, is_optional, selected)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
