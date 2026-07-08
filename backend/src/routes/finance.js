@@ -505,7 +505,7 @@ router.post('/client/submissions/:id/upload-license', auth, role('client'), lice
     const url = '/uploads/' + id + '/' + (req.body.stage || '0') + '/' + req.file.filename;
 
     const { rows: [doc] } = await query(
-      'INSERT INTO submission_license_docs (submission_id, license_type, file_name, file_path, url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      "INSERT INTO submission_license_docs (submission_id, license_type, file_name, file_path, url, uploaded_by) VALUES ($1,$2,$3,$4,$5,'客户') RETURNING *",
       [id, license_type, req.file.originalname, req.file.path, url]
     );
     res.json({ code: 200, message: '上传成功', data: doc });

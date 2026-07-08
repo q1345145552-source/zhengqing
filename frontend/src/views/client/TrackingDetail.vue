@@ -182,8 +182,13 @@
           <el-button type="primary" :loading="uploading"><el-icon><Upload /></el-icon> 上传 {{ data.license_type }} 证件</el-button>
         </el-upload>
         <el-table v-if="licenseDocs.length > 0" :data="licenseDocs" size="small" style="margin-top:12px">
-          <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="license_type" label="类型" width="80" />
+          <el-table-column prop="file_name" label="文件名" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="license_type" label="类型" width="70" />
+          <el-table-column label="上传人" width="80">
+            <template #default="{row}">
+              <el-tag :type="row.uploaded_by === '员工' ? '' : 'info'" size="small">{{ row.uploaded_by || '客户' }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="80">
             <template #default="{row}">
               <el-link type="primary" :href="row.url || (row.file_path && row.file_path.startsWith('/') ? row.file_path : '/uploads' + row.file_path)" target="_blank">查看</el-link>

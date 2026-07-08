@@ -260,7 +260,24 @@ router.put('/submissions/:id/set-license-type', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
 });
 
-// 员工查看客户上传的许可证文件
+// 员工上传许可证文件
+router.post('/submissions/:id/upload-license', require('../middleware/upload').single('file'), async (req, res) => {
+  try {
+    const { query } = require('../db');
+    const { id } = req.params;
+    if (!req.file) return res.status(400).json({ code: 400, message: '请选择文件' });
+    const license_type = req.body.license_type;
+    if (!license_type || !['FDA','TISI','NBTC'].includes(license_type)) return res.status(400).json({ code: 400, message: '无效的证件类型' });
+    const url = '/uploads/' + id + '/' + (req.body.stage || '0') + '/' + req.file.filename;
+    const { rows: [doc] } = await query(
+      "INSERT INTO submission_license_docs (submission_id, license_type, file_name, file_path, url, uploaded_by) VALUES ($1,$2,$3,$4,$5,'员工') RETURNING *",
+      [id, license_type, req.file.originalname, req.file.path, url]
+    );
+    res.json({ code: 200, message: '上传成功', data: doc });
+  } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
+});
+
+// 员工查看所有许可证文件（客户+员工上传的）
 router.get('/submissions/:id/license-docs', async (req, res) => {
   try {
     const { query } = require('../db');

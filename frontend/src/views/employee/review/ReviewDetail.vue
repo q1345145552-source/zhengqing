@@ -72,22 +72,37 @@
                 </el-form-item>
               </el-col>
             </el-row>
-            <!-- 客户上传的许可证文件 -->
-            <el-row :gutter="16" v-if="reviewForm.license_type && licenseDocs.length > 0" style="margin-top:12px">
+            <!-- 许可证文件上传和列表 -->
+            <el-row :gutter="16" v-if="reviewForm.license_type" style="margin-top:16px">
               <el-col :span="24">
-                <h4>客户已上传的证件</h4>
-                <el-table :data="licenseDocs" size="small" style="margin-top:8px">
-                  <el-table-column prop="file_name" label="文件名" min-width="200" show-overflow-tooltip />
-                  <el-table-column prop="license_type" label="证件类型" width="100" />
-                  <el-table-column prop="uploaded_at" label="上传时间" width="170">
+                <h4 style="margin-bottom:8px">上传许可证文件 <el-tag size="small" type="danger">必填</el-tag></h4>
+                <el-upload
+                  :action="'/api/employee/submissions/' + data.id + '/upload-license'"
+                  :headers="uploadHeaders"
+                  :data="{ license_type: reviewForm.license_type, stage: 1 }"
+                  :on-success="onLicenseUploadSuccess"
+                  :show-file-list="false"
+                >
+                  <el-button type="primary" size="small"><el-icon><Upload /></el-icon> 上传 {{ reviewForm.license_type }} 证件</el-button>
+                </el-upload>
+                <el-table v-if="licenseDocs.length > 0" :data="licenseDocs" size="small" style="margin-top:8px">
+                  <el-table-column prop="license_type" label="类型" width="80" />
+                  <el-table-column prop="file_name" label="文件名" min-width="180" show-overflow-tooltip />
+                  <el-table-column label="上传人" width="80">
+                    <template #default="{row}">
+                      <el-tag :type="row.uploaded_by === '员工' ? '' : 'info'" size="small">{{ row.uploaded_by || '客户' }}</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="uploaded_at" label="上传时间" width="160">
                     <template #default="{row}">{{ formatDate(row.uploaded_at) }}</template>
                   </el-table-column>
                   <el-table-column label="操作" width="80">
                     <template #default="{row}">
-                      <el-link type="primary" :href="row.url" target="_blank">查看</el-link>
+                      <el-link type="primary" :href="(row.url || row.file_path)" target="_blank">查看</el-link>
                     </template>
                   </el-table-column>
                 </el-table>
+                <div v-else style="color:#909399;font-size:13px;margin-top:8px">请上传许可证文件</div>
               </el-col>
             </el-row>
           </el-form>
@@ -571,6 +586,11 @@ async function setLicenseType(val) {
     ElMessage.success('许可证类型已设置')
     loadLicenseDocs()
   } catch { ElMessage.error('设置失败') }
+}
+
+function onLicenseUploadSuccess() {
+  ElMessage.success('上传成功')
+  loadLicenseDocs()
 }
 
 async function loadLicenseDocs() {
