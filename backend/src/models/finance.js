@@ -199,11 +199,29 @@ const Finance = {
       const oldSelectedMap = {};
       for (const oc of oldCharges) oldSelectedMap[oc.fee_type] = oc.selected;
 
+      // 查询退税信息，决定中国报关费是否展示
+      const { rows: [rebateRow] } = await query(
+        'SELECT need_rebate FROM submission_tax_rebate WHERE submission_id = $1', [submissionId]
+      );
+      const needRebate = rebateRow?.need_rebate === true;
+
+      // 应用必选逻辑：thai_customs 始终必选，china_customs 仅退税时展示并必选
+      const chargesToSave = [];
+      for (const c of charges) {
+        if (c.fee_type === 'thai_customs') {
+          c.selected = true;  // 泰国清关费始终必选
+        } else if (c.fee_type === 'china_customs') {
+          if (!needRebate) continue;  // 不退税时不展示
+          c.selected = true;  // 退税时必选
+        } else if (oldSelectedMap[c.fee_type] === true) {
+          c.selected = true;  // 其他附加服务保留旧勾选
+        }
+        chargesToSave.push(c);
+      }
+
       await query('DELETE FROM submission_charges WHERE submission_id = $1', [submissionId]);
       const newSelected = [];
-      for (const c of charges) {
-        // 如果旧数据中该费用已勾选，保留勾选状态（员工手动勾选的不会被重置）
-        if (oldSelectedMap[c.fee_type] === true) c.selected = true;
+      for (const c of chargesToSave) {
         await query(
           `INSERT INTO submission_charges (submission_id, fee_type, fee_name, quantity, unit_price, amount, is_optional, selected)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -256,7 +274,16 @@ const Finance = {
   },
 
   async updateCharges(submissionId, charges) {
+    // 查询退税信息，决定中国报关费是否展示
+    const { rows: [rebateRow] } = await query(
+      'SELECT need_rebate FROM submission_tax_rebate WHERE submission_id = $1', [submissionId]
+    );
+    const needRebate = rebateRow?.need_rebate === true;
+
     for (const c of charges) {
+      // 强制必选逻辑：thai_customs 始终 true，china_customs 退税时 true
+      if (c.fee_type === 'thai_customs') c.selected = true;
+      if (c.fee_type === 'china_customs') c.selected = needRebate;
       await query(
         `UPDATE submission_charges SET selected = $3, quantity = $4, amount = $5, updated_at = CURRENT_TIMESTAMP
          WHERE submission_id = $1 AND fee_type = $2`,
