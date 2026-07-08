@@ -17,7 +17,7 @@
         </div>
         <div class="top-numbers">
           <span v-if="data.step1?.tariff_rate">关税 {{ data.step1.tariff_rate }}</span>
-          <span>费用 {{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
+          <span>费用 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span>
         </div>
         <div class="top-time">提交于 {{ fmt(data.created_at) }}</div>
       </div>
@@ -256,7 +256,7 @@
           </div>
         </div>
 
-        <div class="total-bar">费用总计 <span>{{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span></div>
+        <div class="total-bar">费用总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
 
         <!-- 扣款记录 -->
         <el-divider style="margin:20px 0" />
@@ -272,7 +272,7 @@
               </div>
               <div class="balance-row balance-charge">
                 <span>扣费金额</span>
-                <span style="color:#F56C6C">-{{ ((data.finance.charge_log.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
+                <span style="color:#F56C6C">-{{ (data.finance.charge_log.total_amount || 0).toLocaleString() }} ฿</span>
               </div>
               <div class="balance-row" v-if="data.finance.charge_balance_after !== null">
                 <span>扣费后余额</span>
@@ -286,7 +286,7 @@
           <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">待付款</div>
-            <div class="pay-amount">应付 {{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</div>
+            <div class="pay-amount">应付 {{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</div>
             <div class="pay-time">货物到达泰国仓库时自动扣款</div>
           </div>
         </div>

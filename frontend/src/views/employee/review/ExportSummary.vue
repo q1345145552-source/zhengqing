@@ -203,7 +203,7 @@
         <!-- 总计和扣款 -->
         <div class="total-bar">
           <span>总费用</span>
-          <span class="total-amount">{{ ((data.finance?.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
+          <span class="total-amount">{{ ((data.finance?.total_amount || 0)).toLocaleString() }} ฿</span>
         </div>
         <div v-if="data.finance?.charge_log">
           <el-alert v-if="data.finance.charge_log.status === 'charged'" type="success" :closable="false" show-icon title="已扣款" :description="'扣款金额: ' + (data.finance.charge_log.total_amount || 0) + ' ฿，时间: ' + fmt(data.finance.charge_log.charged_at)" style="margin-top:8px" />

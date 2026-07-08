@@ -243,7 +243,8 @@ const EmployeeReview = {
     const domesticFreight = charges.rows.find(c => c.fee_type === 'domestic_freight');
     const storageCharge = charges.rows.find(c => c.fee_type === 'storage');
     const serviceCharges = charges.rows.filter(c => c.is_optional);
-    const totalAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0);
+    const customsDuty = parseFloat(s.customs_duty_amount) || 0;
+    const totalAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0) + customsDuty;
 
     return {
       // 基本信息
