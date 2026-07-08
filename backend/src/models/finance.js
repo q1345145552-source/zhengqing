@@ -261,8 +261,10 @@ const Finance = {
   async getSubmissionCharges(submissionId) {
     const { rows } = await query('SELECT * FROM submission_charges WHERE submission_id = $1 ORDER BY is_optional, id', [submissionId]);
     const { rows: [log] } = await query('SELECT * FROM submission_charge_logs WHERE submission_id = $1 ORDER BY id DESC LIMIT 1', [submissionId]);
-    const total = rows.filter(c => c.selected).reduce((s, c) => s + parseFloat(c.amount), 0);
-    return { charges: rows, total: Math.round(total * 100) / 100, charge_log: log || null };
+    const { rows: [sub] } = await query('SELECT COALESCE(customs_duty_amount, 0) AS customs_duty_amount FROM submissions WHERE id = $1', [submissionId]);
+    const customsDuty = parseFloat(sub?.customs_duty_amount || 0);
+    const total = rows.filter(c => c.selected).reduce((s, c) => s + parseFloat(c.amount), 0) + customsDuty;
+    return { charges: rows, total: Math.round(total * 100) / 100, charge_log: log || null, customs_duty_amount: customsDuty };
   },
 
   async updateCharges(submissionId, charges) {

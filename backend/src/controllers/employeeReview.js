@@ -143,7 +143,7 @@ const employeeReviewController = {
         } catch (chargeErr) {
           // 扣款失败：设置 pending_charge 标记，通知客户
           const { rows: [check] } = await query(
-            `SELECT s.user_id, s.application_no, COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) AS total_amount,
+            `SELECT s.user_id, s.application_no, COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) + COALESCE(s.customs_duty_amount, 0) AS total_amount,
                     COALESCE((SELECT balance FROM client_wallets WHERE user_id = s.user_id), 0) AS balance
              FROM submissions s WHERE s.id = $1`, [subId]
           );
