@@ -34,7 +34,7 @@
         >
           <template #title>需使用客户公司名义向中国海关申报</template>
           <p style="margin: 8px 0 0; line-height: 1.8">
-            我们将与中国物流（微信）对接，并提供对应的物流编码，请客户贴在每个外箱上。
+            我们将与中国物流（微信）对接，协助完成报关流程。
           </p>
         </el-alert>
 
@@ -43,9 +43,6 @@
         </el-form-item>
         <el-form-item label="物流对接人（微信）">
           <el-input v-model="form.logistics_contact" placeholder="物流对接人微信号或手机号" maxlength="200" @input="emitUpdate" />
-        </el-form-item>
-        <el-form-item label="物流编码" required>
-          <el-input v-model="form.logistics_code" placeholder="由物流方提供的编码，需贴于每个外箱" maxlength="100" @input="emitUpdate" />
         </el-form-item>
       </template>
 
@@ -131,7 +128,6 @@ const form = reactive({
   need_rebate: props.formData?.need_rebate ?? null,
   customs_company_name: props.formData?.customs_company_name || '',
   logistics_contact: props.formData?.logistics_contact || '',
-  logistics_code: props.formData?.logistics_code || '',
   invoice_file: props.formData?.invoice_file || null,
   packing_list_file: props.formData?.packing_list_file || null,
 })
@@ -142,7 +138,6 @@ watch(() => props.formData, (newVal) => {
   if (newVal.need_rebate !== undefined) form.need_rebate = newVal.need_rebate
   if (newVal.customs_company_name !== undefined) form.customs_company_name = newVal.customs_company_name || ''
   if (newVal.logistics_contact !== undefined) form.logistics_contact = newVal.logistics_contact || ''
-  if (newVal.logistics_code !== undefined) form.logistics_code = newVal.logistics_code || ''
   if (newVal.invoice_file !== undefined) form.invoice_file = newVal.invoice_file
   if (newVal.packing_list_file !== undefined) form.packing_list_file = newVal.packing_list_file
 }, { deep: true, immediate: false })
@@ -156,7 +151,6 @@ function handleRebateChange() {
   if (!form.need_rebate) {
     form.customs_company_name = ''
     form.logistics_contact = ''
-    form.logistics_code = ''
   }
   emitUpdate()
 }
@@ -191,7 +185,6 @@ async function handleFileChange(event, field) {
 var rules = {
   need_rebate: [{ required: true, message: '请选择退税类型', trigger: 'change', validator: function(rule, value, cb) { if (value === null || value === undefined) cb(new Error('请选择是否需要退税')); else cb(); } }],
   customs_company_name: [{ required: true, message: '请输入报关公司名称', trigger: 'blur' }],
-  logistics_code: [{ required: true, message: '请输入物流编码', trigger: 'blur' }],
   invoice_file: [{ required: true, message: '请上传商业发票', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传商业发票')); else cb(); } }],
   packing_list_file: [{ required: true, message: '请上传装箱单', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传装箱单')); else cb(); } }],
 };
