@@ -443,6 +443,9 @@
       <el-button type="success" size="large" @click="handleReview('approve')" :loading="acting">
         <el-icon><CircleCheckFilled /></el-icon> 审核通过
       </el-button>
+      <el-button type="warning" size="large" @click="handleSaveReviewForm" :loading="savingForm">
+        <el-icon><FolderChecked /></el-icon> 保存审核信息
+      </el-button>
       <el-button type="danger" size="large" @click="handleReview('reject')" :loading="acting">
         <el-icon><CircleCloseFilled /></el-icon> 退回
       </el-button>
@@ -534,6 +537,7 @@ const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const acting = ref(false)
+const savingForm = ref(false)
 const registering = ref(false)
 const activeTab = ref('step1')
 const data = reactive({ review_status: 'pending' })
@@ -751,6 +755,25 @@ function fileUrl(file) {
 function openFile(file) {
   const url = fileUrl(file)
   if (url) window.open(url, '_blank')
+}
+
+async function handleSaveReviewForm() {
+  if (!data.id) return
+  savingForm.value = true
+  try {
+    await request.put('/employee/submissions/' + data.id + '/review-form', {
+      hs_code: reviewForm.hs_code || null,
+      tax_rate: reviewForm.tax_rate || null,
+      need_form_e: reviewForm.need_form_e,
+      need_license: reviewForm.need_license,
+    })
+    // Also save license_type via existing API
+    if (reviewForm.license_type) {
+      await request.put('/employee/submissions/' + data.id + '/set-license-type', { license_type: reviewForm.license_type }).catch(() => {})
+    }
+    ElMessage.success('审核信息已保存')
+  } catch { ElMessage.error('保存失败') }
+  finally { savingForm.value = false }
 }
 
 async function handleReview(action) {
