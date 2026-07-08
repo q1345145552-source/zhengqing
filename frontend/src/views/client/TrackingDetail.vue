@@ -226,9 +226,9 @@
 
         <!-- 境内运费 -->
         <h4 style="margin-top:14px">境内运费</h4>
-        <el-descriptions :column="2" border size="small">
+        <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="物流公司">{{ data.finance?.domestic_logistics_name || '未选择' }}</el-descriptions-item>
-          <el-descriptions-item label="金额">{{ data.finance?.domestic_freight?.amount || 0 }} ฿</el-descriptions-item>
+          <el-descriptions-item label="备注">{{ data.finance?.domestic_freight?.fee_name || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 仓储费 -->

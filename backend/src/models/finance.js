@@ -161,38 +161,19 @@ const Finance = {
       charges.push({ fee_type: 'wooden_box', fee_name: boxRule.fee_name, quantity: boxCbm, unit_price: parseFloat(boxRule.unit_price), amount: boxAmount, is_optional: true, selected: false });
     }
 
-    // ========== 第二段：境内运费（泰国仓库→客户）==========
+    // ========== 第二段：境内运费（仅备注，不自动计费）==========
     const logistics = params.domestic_logistics || '';
-    let domesticAmount = 0; let domesticName = '境内运费';
+    const domesticNames = {
+      bluewhite: 'BlueWhite 蓝白物流 — 费用额外另算',
+      flash: 'Flash Express — 费用额外另算',
+      kerry: 'Kerry Express — 费用额外另算',
+      nim: 'Nim Express — 费用额外另算',
+      lalamove: 'Lalamove 包车派送 — 费用额外另算',
+      nss: 'NSS 曼谷自提 — 免费 0 ฿',
+    };
+    const domesticName = domesticNames[logistics] || (logistics ? logistics + ' — 费用额外另算' : '未选择');
 
-    if (logistics === 'bluewhite') {
-      // 只按体积计费，最小0.01m³
-      const bluePrice = parseFloat(globalRuleMap.domestic_bluewhite?.unit_price || 0);
-      domesticAmount = Math.max(volume, 0.01) * bluePrice;
-      domesticName = `境内 BlueWhite(体积 ${Math.max(volume, 0.01)}m³ × ${bluePrice}฿)`;
-    } else if (logistics === 'flash' || logistics === 'kerry') {
-      // 重量 vs 折算重量(体积×200) 取大，向上取整
-      const key = logistics === 'flash' ? 'domestic_flash' : 'domestic_kerry';
-      const dp = parseFloat(globalRuleMap[key]?.unit_price || 0);
-      const volWeight = Math.ceil(volume * 200);
-      const actualWeight = Math.ceil(weight);
-      const billWeight = Math.max(actualWeight, volWeight);
-      domesticAmount = billWeight * dp;
-      domesticName = `境内 ${logistics==='flash'?'Flash':'Kerry'}(计费重 ${billWeight}kg × ${dp}฿)`;
-    } else if (logistics === 'nim') {
-      // 重量 vs 折算重量(体积×250) 取大，向上取整
-      const dp = parseFloat(globalRuleMap.domestic_nim?.unit_price || 0);
-      const volWeight = Math.ceil(volume * 250);
-      const actualWeight = Math.ceil(weight);
-      const billWeight = Math.max(actualWeight, volWeight);
-      domesticAmount = billWeight * dp;
-      domesticName = `境内 Nim(计费重 ${billWeight}kg × ${dp}฿)`;
-    } else if (logistics === 'nss') {
-      domesticAmount = 0;
-      domesticName = '境内 NSS(曼谷自提 免费)';
-    }
-
-    charges.push({ fee_type: 'domestic_freight', fee_name: domesticName, quantity: 1, unit_price: domesticAmount, amount: Math.round(domesticAmount * 100) / 100, is_optional: false, selected: true });
+    charges.push({ fee_type: 'domestic_freight', fee_name: domesticName, quantity: 1, unit_price: 0, amount: 0, is_optional: false, selected: true });
 
     // ========== 第三段：仓储费 ==========
     let storageAmount = 0;
@@ -230,8 +211,8 @@ const Finance = {
       if (entryDate) {
         const e = new Date(entryDate); const n = new Date();
         const days = Math.max(0, Math.floor((n - e) / (1000 * 60 * 60 * 24)));
-        await query('UPDATE submissions SET warehouse_entry_date = $1, storage_days = $2, storage_fee = $3, domestic_freight = $4 WHERE id = $5',
-          [entryDate, Math.max(0, days - 5), storageAmount, domesticAmount, submissionId]);
+        await query('UPDATE submissions SET warehouse_entry_date = $1, storage_days = $2, storage_fee = $3 WHERE id = $4',
+          [entryDate, Math.max(0, days - 5), storageAmount, submissionId]);
       }
 
       // 记录费用修改日志
@@ -257,7 +238,7 @@ const Finance = {
     }
 
     const total = charges.reduce((s, c) => s + (c.selected ? c.amount : 0), 0);
-    return { charges, total: Math.round(total * 100) / 100, domestic_freight: domesticAmount, storage_fee: storageAmount };
+    return { charges, total: Math.round(total * 100) / 100, domestic_freight: 0, storage_fee: storageAmount };
   },
 
   async getSubmissionCharges(submissionId) {

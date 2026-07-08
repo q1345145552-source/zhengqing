@@ -277,15 +277,10 @@
             </div>
           </div>
 
-          <!-- 境内运费（自动计算） -->
-          <div v-if="domesticCharges.length > 0" style="margin-top:20px">
+          <!-- 境内运费（仅备注） -->
+          <div v-if="freightParams.domestic_logistics" style="margin-top:20px">
             <h4>境内运费</h4>
-            <el-table :data="domesticCharges" size="small" stripe>
-              <el-table-column prop="fee_name" label="费用项目" min-width="260" />
-              <el-table-column label="数量" width="80"><template #default="{row}">{{ row.quantity }}</template></el-table-column>
-              <el-table-column label="单价" width="100"><template #default="{row}">฿{{ row.unit_price }}</template></el-table-column>
-              <el-table-column label="金额" width="120"><template #default="{row}">฿{{ row.amount }}</template></el-table-column>
-            </el-table>
+            <el-alert :title="domesticNote" type="info" :closable="false" show-icon />
           </div>
 
           <!-- 仓储费（自动计算） -->
@@ -338,10 +333,7 @@
                 <span>国际运费</span>
                 <span>{{ intlFreightAmount.toLocaleString() }} ฿</span>
               </div>
-              <div v-if="domesticAmount > 0" class="summary-row">
-                <span>境内运费</span>
-                <span>{{ domesticAmount.toLocaleString() }} ฿</span>
-              </div>
+
               <div v-if="storageAmount > 0" class="summary-row">
                 <span>仓储费</span>
                 <span>{{ storageAmount.toLocaleString() }} ฿</span>
@@ -620,6 +612,20 @@ const step3Files = computed(() => [
 
 const timeline = ref([])
 // 分离：体积/重量计费明细 vs 境内运费 vs 仓储费
+const domesticNote = computed(() => {
+  if (!freightParams.domestic_logistics) return ''
+  const notes = {
+    bluewhite: 'BlueWhite 蓝白物流 — 费用额外另算',
+    flash: 'Flash Express — 费用额外另算',
+    kerry: 'Kerry Express — 费用额外另算',
+    nim: 'Nim Express — 费用额外另算',
+    lalamove: 'Lalamove 包车派送 — 费用额外另算',
+    nss: 'NSS 曼谷自提 — 免费 0 ฿',
+  }
+  return notes[freightParams.domestic_logistics] || (freightParams.domestic_logistics + ' — 费用额外另算')
+})
+
+const domesticCharges = computed(() => charges.value.filter(c => c.fee_type === 'domestic_freight'))
 const freightCalcCharges = computed(() => charges.value.filter(c => c.fee_type === 'freight_cbm' || c.fee_type === 'freight_kg'))
 const maxNoteText = computed(() => {
   const note = charges.value.find(c => c.fee_type === 'freight_max_note')
@@ -633,8 +639,6 @@ const intlFreightAmount = computed(() => {
   if (kgCharge?.selected) return parseFloat(kgCharge.amount) || 0
   return 0
 })
-const domesticCharges = computed(() => charges.value.filter(c => c.fee_type === 'domestic_freight'))
-const domesticAmount = computed(() => domesticCharges.value.filter(c => c.selected).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0))
 const storageCharges = computed(() => charges.value.filter(c => c.fee_type === 'storage'))
 const storageAmount = computed(() => storageCharges.value.filter(c => c.selected).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0))
 const otherTransportCharges = computed(() => charges.value.filter(c => !c.is_optional && c.fee_type !== 'freight_cbm' && c.fee_type !== 'freight_kg' && c.fee_type !== 'freight_max_note'))
