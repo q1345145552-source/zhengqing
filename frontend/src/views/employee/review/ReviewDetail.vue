@@ -226,6 +226,7 @@
                 <el-option label="Kerry Express" value="kerry" />
                 <el-option label="Nim Express" value="nim" />
                 <el-option label="NSS 曼谷自提" value="nss" />
+                <el-option label="Lalamove 包车派送" value="lalamove" />
               </el-select>
             </el-form-item>
             <el-form-item label="体积(CBM)"><el-input-number v-model="freightParams.volume" :min="0" :step="0.1" :precision="2" size="small" /></el-form-item>

@@ -232,6 +232,7 @@ const EmployeeReview = {
       kerry: 'Kerry Express',
       nim: 'Nim Express',
       nss: 'NSS 曼谷自提',
+      lalamove: 'Lalamove 包车派送',
     };
 
     // 费用分类

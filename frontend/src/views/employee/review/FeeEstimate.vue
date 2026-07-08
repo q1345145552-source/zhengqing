@@ -29,6 +29,7 @@
                 <el-option label="Kerry Express" value="kerry" />
                 <el-option label="Nim Express" value="nim" />
                 <el-option label="NSS 曼谷自提(免费)" value="nss" />
+                <el-option label="Lalamove 包车派送" value="lalamove" />
               </el-select>
             </el-form-item>
             <el-form-item label="入仓日期">
