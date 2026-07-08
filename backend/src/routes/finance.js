@@ -528,7 +528,7 @@ router.get('/client/charge-history', auth, role('client'), async (req, res) => {
   try {
     const { query } = require('../db');
     const { rows } = await query(
-      `SELECT wt.id, wt.submission_id, s.application_no, wt.amount, wt.description, wt.created_at
+      `SELECT wt.id, wt.submission_id, s.application_no, wt.amount, wt.balance_after, wt.description, wt.created_at
        FROM wallet_transactions wt
        LEFT JOIN submissions s ON wt.submission_id = s.id
        WHERE wt.user_id = $1 AND wt.type = 'charge'

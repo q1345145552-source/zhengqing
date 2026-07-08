@@ -152,10 +152,16 @@
         <el-table-column label="申请编号" width="140">
           <template #default="{ row }">{{ row.application_no || '-' }}</template>
         </el-table-column>
-        <el-table-column label="金额" width="120">
-          <template #default="{ row }">- ¥{{ row.amount }}</template>
+        <el-table-column label="扣费前余额" width="130">
+          <template #default="{ row }">{{ ((parseFloat(row.balance_after) || 0) + (parseFloat(row.amount) || 0)).toLocaleString() }} ฿</template>
         </el-table-column>
-        <el-table-column prop="description" label="说明" min-width="180" show-overflow-tooltip />
+        <el-table-column label="扣费金额" width="120">
+          <template #default="{ row }"><span style="color:#F56C6C;font-weight:600">-{{ (parseFloat(row.amount) || 0).toLocaleString() }} ฿</span></template>
+        </el-table-column>
+        <el-table-column label="扣费后余额" width="130">
+          <template #default="{ row }">{{ (parseFloat(row.balance_after) || 0).toLocaleString() }} ฿</template>
+        </el-table-column>
+        <el-table-column prop="description" label="说明" min-width="140" show-overflow-tooltip />
       </el-table>
     </el-card>
 
