@@ -129,9 +129,9 @@ const activeMenu = computed(() => route.path)
 
 function handleCommand(command) {
   if (command === 'logout') {
-    ElMessageBox.confirm(`确定要${i18n.global.t('common.logout')}吗？`, '提示', {
-      confirmButtonText: i18n.global.t('common.confirm'),
-      cancelButtonText: i18n.global.t('common.cancel'),
+    ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
       type: 'warning',
     }).then(() => {
       authStore.logout()
