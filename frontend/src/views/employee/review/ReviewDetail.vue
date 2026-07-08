@@ -375,7 +375,7 @@
             <div class="pay-text">
               <div class="pay-title">待扣款</div>
               <div class="pay-amount">应收 {{ parseFloat(totalAmount).toLocaleString() }} ฿</div>
-              <div class="pay-time">推进到「中国仓库收货」时自动扣款</div>
+              <div class="pay-time">推进到「已到泰国仓库」时自动扣款</div>
             </div>
           </div>
         </div>
@@ -468,8 +468,8 @@
             推进至「{{ nextStatusLabel }}」
           </el-button>
         </div>
-        <el-alert v-if="nextTrackingStatus === 7" type="warning" :closable="false" show-icon style="margin-top:8px"
-          title="注意" description="推进到「中国仓库收货」将自动从客户余额扣款，请确保费用已确认且客户余额充足。" />
+        <el-alert v-if="nextTrackingStatus === 9" type="warning" :closable="false" show-icon style="margin-top:8px"
+          title="注意" description="推进到「已到泰国仓库」将自动从客户余额扣款，请确保费用已确认且客户余额充足。" />
         <div v-if="!canAdvance" class="status-end">
           <el-icon color="#67C23A" size="24"><CircleCheckFilled /></el-icon>
           <span>订单已完成全部流程</span>
@@ -869,11 +869,11 @@ async function handleAdvanceStatus() {
   const next = nextTrackingStatus.value
   if (!next) return
 
-  // 状态7需确认扣款
-  if (next === 7) {
+  // 状态9需确认扣款
+  if (next === 9) {
     try {
       await ElMessageBox.confirm(
-        '推进到「中国仓库收货」将自动从客户余额扣款。请确保费用已确认且客户余额充足。',
+        '推进到「已到泰国仓库」将自动从客户余额扣款。请确保费用已确认且客户余额充足。',
         '确认到仓并扣款',
         { confirmButtonText: '确认推进并扣款', cancelButtonText: '取消', type: 'warning' }
       )

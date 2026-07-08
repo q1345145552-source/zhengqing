@@ -6,7 +6,7 @@ import i18n from '@/locales'
 const statusKeys = {
   1: 'pendingReview', 2: 'approved', 3: 'pendingPayment',
   4: 'paid', 5: 'warehouseReceiving', 6: 'inTransit',
-  7: 'arrivedThailand', 8: 'inCustoms', 9: 'released',
+  7: 'inCustoms', 8: 'released', 9: 'arrivedThailand',
   10: 'outForDelivery', 11: 'completed',
 }
 

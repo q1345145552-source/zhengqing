@@ -46,7 +46,7 @@ import { ref, onMounted } from 'vue'
 import request from '@/api/request'
 import { getTrackingStatus } from '@/utils/tracking'
 
-const STATUS_MAP = { 1:'待审核',2:'审核通过',3:'待付款',4:'已付款',5:'中国仓库收货',6:'运输中',7:'已到泰国仓库',8:'清关中',9:'已放行',10:'已派送',11:'已完成' }
+const STATUS_MAP = { 1:'待审核',2:'审核通过',3:'待付款',4:'已付款',5:'中国仓库收货',6:'运输中',7:'清关中',8:'已放行',9:'已到泰国仓库',10:'已派送',11:'已完成' }
 
 const list = ref([])
 const loading = ref(false)

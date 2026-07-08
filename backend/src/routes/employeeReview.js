@@ -162,13 +162,13 @@ router.post('/pending-charges/:id/retry', async (req, res) => {
       await query('UPDATE submissions SET pending_charge = false, pending_charge_amount = NULL, arrived_at_warehouse = CURRENT_TIMESTAMP, tracking_status = 7, tracking_status_updated_at = CURRENT_TIMESTAMP WHERE id = $1', [subId]);
 
       const EmployeeReview = require('../models/employeeReview');
-      await EmployeeReview.logReview(subId, req.user.id, 'advance_status', '状态推进: 运输中 → 中国仓库收货（员工确认扣款）');
+      await EmployeeReview.logReview(subId, req.user.id, 'advance_status', '状态推进: 已放行 → 已到泰国仓库（自动扣款）');
 
       const appNo = sub.application_no || `#${subId}`;
       await Finance.createNotification(sub.user_id, '扣款成功',
-        `您的申请 ${appNo} 已扣款 ${parseFloat(sub.pending_charge_amount || 0).toLocaleString()} ฿，货物已到中国仓库。`, 'success', 'submission', subId);
+        `您的申请 ${appNo} 已扣款 ${parseFloat(sub.pending_charge_amount || 0).toLocaleString()} ฿，货物已到泰国仓库。`, 'success', 'submission', subId);
 
-      res.json({ code: 200, message: '扣款成功，状态已推进到中国仓库收货' });
+      res.json({ code: 200, message: '扣款成功，状态已推进到已到泰国仓库' });
     } catch (chargeErr) {
       res.status(400).json({ code: 400, message: chargeErr.message || '扣款失败，余额仍不足' });
     }
