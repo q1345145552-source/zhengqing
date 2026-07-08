@@ -98,9 +98,16 @@ async function handleLogin() {
     const user = await authStore.login(loginForm.username, loginForm.password)
     ElMessage.success('欢迎回来，' + user.username + '！')
     const redirect = route.query.redirect || authStore.homePage
-    router.push(redirect)
+    console.log('[Login] redirect to:', redirect, 'role:', user.role)
+    await router.push(redirect).catch((navErr) => {
+      // 路由懒加载组件失败或其他导航错误
+      console.error('[Login] Navigation failed:', navErr)
+      // 尝试用 location 直接跳转作为兜底
+      window.location.href = redirect
+    })
   } catch (err) {
     console.error('Login failed:', err)
+    ElMessage.error('登录失败：' + (err.message || '请检查账号密码'))
   } finally {
     loading.value = false
   }
