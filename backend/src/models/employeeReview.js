@@ -202,7 +202,7 @@ const EmployeeReview = {
    * 导出汇总：全量资料 + 费用 + 时间线 + Next注册信息
    */
   async exportData(submissionId) {
-    const [sub, step1, step2, step3, step4, step5, files, license_docs2, charges, chargeLog, logs] = await Promise.all([
+    const [sub, step1, step2, step3, step4, step5, files, license_docs2, charges, chargeLog, walletTx, logs] = await Promise.all([
       query(`SELECT s.*, u.username AS client_name, u.email AS client_email
              FROM submissions s JOIN users u ON s.user_id = u.id WHERE s.id = $1`, [submissionId]),
       query('SELECT * FROM submission_products WHERE submission_id = $1', [submissionId]),
@@ -214,6 +214,7 @@ const EmployeeReview = {
       query('SELECT * FROM submission_license_docs WHERE submission_id = $1 ORDER BY uploaded_at DESC', [submissionId]),
       query('SELECT * FROM submission_charges WHERE submission_id = $1 ORDER BY is_optional, id', [submissionId]),
       query('SELECT * FROM submission_charge_logs WHERE submission_id = $1 ORDER BY id DESC LIMIT 1', [submissionId]),
+      query("SELECT * FROM wallet_transactions WHERE submission_id = $1 AND type = 'charge' ORDER BY id DESC LIMIT 1", [submissionId]),
       query('SELECT rl.*, u.username AS operator_name FROM review_logs rl JOIN users u ON rl.employee_id = u.id WHERE rl.submission_id = $1 ORDER BY rl.created_at ASC', [submissionId]),
     ]);
 
@@ -291,6 +292,8 @@ const EmployeeReview = {
         services: serviceCharges,
         total_amount: Math.round(totalAmount * 100) / 100,
         charge_log: chargeLog.rows[0] || null,
+        charge_balance_before: walletTx.rows[0] ? parseFloat(walletTx.rows[0].amount) + parseFloat(walletTx.rows[0].balance_after) : null,
+        charge_balance_after: walletTx.rows[0] ? parseFloat(walletTx.rows[0].balance_after) : null,
       },
 
       // 第七区：Next注册信息

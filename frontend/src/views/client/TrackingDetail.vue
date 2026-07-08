@@ -260,7 +260,20 @@
           <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><CircleCheckFilled /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">已扣款</div>
-            <div class="pay-amount">{{ ((data.finance.charge_log.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</div>
+            <div class="balance-rows">
+              <div class="balance-row" v-if="data.finance.charge_balance_before !== null">
+                <span>扣费前余额</span>
+                <span>{{ Math.round(data.finance.charge_balance_before).toLocaleString() }} ฿</span>
+              </div>
+              <div class="balance-row balance-charge">
+                <span>扣费金额</span>
+                <span style="color:#F56C6C">-{{ ((data.finance.charge_log.total_amount || 0) + (data.customs_duty_amount || 0)).toLocaleString() }} ฿</span>
+              </div>
+              <div class="balance-row" v-if="data.finance.charge_balance_after !== null">
+                <span>扣费后余额</span>
+                <span style="font-weight:700;color:#303133">{{ Math.round(data.finance.charge_balance_after).toLocaleString() }} ฿</span>
+              </div>
+            </div>
             <div class="pay-time">扣款时间：{{ fmt(data.finance.charge_log.charged_at) }}</div>
           </div>
         </div>
@@ -463,4 +476,8 @@ h4 { font-size: 14px; color: #606266; margin: 0 0 8px; }
 .pay-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
 .pay-amount { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
 .pay-time { font-size: 14px; opacity: .85; }
+.balance-rows { margin: 8px 0; }
+.balance-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: #606266; }
+.balance-row span:last-child { font-weight: 600; }
+.balance-charge { border-top: 1px dashed #DCDFE6; padding-top: 8px; margin-top: 4px; }
 </style>
