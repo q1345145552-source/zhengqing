@@ -99,22 +99,24 @@ const Finance = {
 
     // ========== 第一段：国际运费（择大计费）==========
     // 体积单价：根据体积落在哪个阶梯
+    // 优先查阶梯单价，不存在则回退到统一单价 freight_cbm
     const isYiwu = route === 'yiwu_bangkok';
     let cbmPrice;
     if (isYiwu) {
       // 义乌路线：≤5m³ 用高价，>5m³ 用低价（阶梯方向与其他路线相反）
-      if (volume <= 5) cbmPrice = parseFloat(routeRuleMap.freight_cbm_small?.unit_price || 0);
-      else cbmPrice = parseFloat(routeRuleMap.freight_cbm_large?.unit_price || 0) || cbmPrice;
+      if (volume <= 5) cbmPrice = parseFloat(routeRuleMap.freight_cbm_small?.unit_price || routeRuleMap.freight_cbm?.unit_price || 0);
+      else cbmPrice = parseFloat(routeRuleMap.freight_cbm_large?.unit_price || routeRuleMap.freight_cbm?.unit_price || 0) || cbmPrice;
     } else {
       // 南宁/广州路线：<5m³ 用高价，≥5m³ 用低价
-      if (volume < 5) cbmPrice = parseFloat(routeRuleMap.freight_cbm_small?.unit_price || 0);
-      else cbmPrice = parseFloat(routeRuleMap.freight_cbm_large?.unit_price || 0) || cbmPrice;
+      if (volume < 5) cbmPrice = parseFloat(routeRuleMap.freight_cbm_small?.unit_price || routeRuleMap.freight_cbm?.unit_price || 0);
+      else cbmPrice = parseFloat(routeRuleMap.freight_cbm_large?.unit_price || routeRuleMap.freight_cbm?.unit_price || 0) || cbmPrice;
     }
 
     // 重量单价：根据重量落在哪个阶梯（所有路线统一：<1000kg 用高价，≥1000kg 用低价）
+    // 优先查阶梯单价，不存在则回退到统一单价 freight_kg
     let kgPrice;
-    if (weight < 1000) kgPrice = parseFloat(routeRuleMap.freight_kg_small?.unit_price || 0);
-    else kgPrice = parseFloat(routeRuleMap.freight_kg_large?.unit_price || 0) || kgPrice;
+    if (weight < 1000) kgPrice = parseFloat(routeRuleMap.freight_kg_small?.unit_price || routeRuleMap.freight_kg?.unit_price || 0);
+    else kgPrice = parseFloat(routeRuleMap.freight_kg_large?.unit_price || routeRuleMap.freight_kg?.unit_price || 0) || kgPrice;
 
     const cbmAmount = volume * cbmPrice;
     const kgAmount = weight * kgPrice;
