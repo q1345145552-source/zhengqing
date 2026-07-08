@@ -413,7 +413,7 @@ router.get('/tracking', async (req, res) => {
       `SELECT DISTINCT ON (s.id) s.id, s.application_no, s.tracking_status, s.tracking_status_updated_at, s.review_status, s.updated_at, s.created_at,
               u.username AS client_name, COALESCE(sp.thai_name, sp.english_name, '未填写') AS product_name, COALESCE(sp.tariff_rate, '') AS tariff_rate,
               COALESCE(ccd.company_name, '') AS company_name,
-              COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) AS total_freight,
+              COALESCE((SELECT SUM(sc.amount) FROM submission_charges sc WHERE sc.submission_id = s.id AND sc.selected), 0) + COALESCE(s.customs_duty_amount, 0) AS total_freight,
               scl.status AS charge_status, COALESCE(scl.total_amount, 0) AS charged_amount, s.pending_charge, COALESCE(s.pending_charge_amount, 0) AS pending_charge_amount
        FROM submissions s JOIN users u ON s.user_id = u.id LEFT JOIN submission_products sp ON sp.submission_id = s.id
        LEFT JOIN client_company_docs ccd ON ccd.user_id = s.user_id
