@@ -99,7 +99,7 @@ function payBadge(item) {
   if (item.charge_status === 'charged') return { text: '已付款 ' + (item.charged_amount || 0).toLocaleString() + ' ฿', type: 'success' }
   return { text: '扣款失败', type: 'danger' }
 }
-function canAdvance(item) { const ts = item.tracking_status || 1; return ts >= 2 && ts < 11 }
+function canAdvance(item) { const ts = item.tracking_status || 1; return ts >= 2 && ts < 9 }
 function nextLabel(item) { return getNextStatusLabel(item.tracking_status) }
 
 async function handleAdvance(item) {

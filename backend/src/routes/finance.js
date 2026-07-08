@@ -109,7 +109,7 @@ router.get('/client/tracking', async (req, res) => {
     const { query } = require('../db');
     const { page, pageSize, search, offset } = paginate(req);
     const params = [req.user.id];
-    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
+    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 9`;
 
     if (search) {
       params.push(`%${search}%`);
@@ -139,7 +139,7 @@ router.get('/client/orders', async (req, res) => {
     const { query } = require('../db');
     const { page, pageSize, search, offset } = paginate(req);
     const params = [req.user.id];
-    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status = 11`;
+    let where = `s.user_id = $1 AND s.status = 'submitted' AND s.tracking_status = 9`;
 
     if (search) {
       params.push(`%${search}%`);
@@ -204,8 +204,8 @@ router.get('/client/tracking/:id/timeline', async (req, res) => {
     );
 
     const statusNames = {
-      1:'待审核',2:'审核通过',3:'待付款',4:'已付款',5:'中国仓库收货',
-      6:'运输中',7:'清关中',8:'已放行',9:'已到泰国仓库',10:'已派送',11:'已完成',
+      1:'待审核',2:'审核通过',3:'中国仓库收货',
+      4:'运输中',5:'清关中',6:'已放行',7:'已到泰国仓库',8:'已派送',9:'已完成',
     };
 
     // 构建时间线
@@ -261,8 +261,8 @@ router.get('/client/dashboard-stats', async (req, res) => {
     const userId = req.user.id;
     const [totalOrders, activeOrders, completedOrders, totalSpent, wallet] = await Promise.all([
       query('SELECT COUNT(*) AS c FROM submissions WHERE user_id = $1 AND status = $2', [userId, 'submitted']),
-      query('SELECT COUNT(*) AS c FROM submissions WHERE user_id = $1 AND status = $2 AND tracking_status >= 2 AND tracking_status < 11', [userId, 'submitted']),
-      query('SELECT COUNT(*) AS c FROM submissions WHERE user_id = $1 AND status = $2 AND tracking_status = 11', [userId, 'submitted']),
+      query('SELECT COUNT(*) AS c FROM submissions WHERE user_id = $1 AND status = $2 AND tracking_status >= 2 AND tracking_status < 9', [userId, 'submitted']),
+      query('SELECT COUNT(*) AS c FROM submissions WHERE user_id = $1 AND status = $2 AND tracking_status = 9', [userId, 'submitted']),
       query(`SELECT COALESCE(SUM(scl.total_amount),0) AS c FROM submission_charge_logs scl JOIN submissions s ON scl.submission_id=s.id WHERE s.user_id=$1 AND scl.status='charged'`, [userId]),
       query('SELECT COALESCE(balance,0) AS c FROM client_wallets WHERE user_id = $1', [userId])
     ]);

@@ -99,9 +99,9 @@ router.get('/dashboard', async (req, res) => {
       query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND created_at >= $1", [monthStr]),
       query(`SELECT COALESCE(SUM(scl.total_amount),0) AS c FROM submission_charge_logs scl JOIN submissions s ON scl.submission_id=s.id WHERE scl.status='charged' AND scl.charged_at >= $1`, [monthStr]),
       query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND (review_status='pending' OR review_status IS NULL)"),
-      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND review_status IN ('approved','registered') AND (tracking_status < 3 OR tracking_status IS NULL)"),
-      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND tracking_status >= 5 AND tracking_status <= 10"),
-      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND tracking_status = 11"),
+      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND review_status IN ('approved','registered') AND (tracking_status < 2 OR tracking_status IS NULL)"),
+      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND tracking_status >= 3 AND tracking_status <= 8"),
+      query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND tracking_status = 9"),
       query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND international_route = 'nanning_bangkok'"),
       query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND international_route = 'guangzhou_bangkok'"),
       query("SELECT COUNT(*) AS c FROM submissions WHERE status='submitted' AND international_route = 'yiwu_bangkok'"),
@@ -400,8 +400,8 @@ router.get('/tracking', async (req, res) => {
     const offset = (page - 1) * pageSize;
     const statusFilter = parseInt(req.query.status) || 0;
     const params = [];
-    let where = `s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
-    if (statusFilter >= 1 && statusFilter <= 11) where += ` AND s.tracking_status = ${statusFilter}`;
+    let where = `s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 9`;
+    if (statusFilter >= 1 && statusFilter <= 9) where += ` AND s.tracking_status = ${statusFilter}`;
     if (search) {
       params.push(`%${search}%`);
       where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR u.username ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length} OR COALESCE(ccd.company_name,'') ILIKE $${params.length})`;

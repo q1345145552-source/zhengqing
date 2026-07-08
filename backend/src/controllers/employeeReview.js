@@ -114,7 +114,7 @@ const employeeReviewController = {
   /**
    * PUT /api/employee/submissions/:id/advance-status
    * 推进订单状态到下一步（只能按顺序推进，不能跳转）
-   * 状态 9（已到泰国仓库）时触发自动扣款
+   * 状态 7（已到泰国仓库）时触发自动扣款
    */
   async advanceStatus(req, res) {
     const { query } = require('../db');
@@ -134,8 +134,8 @@ const employeeReviewController = {
 
       const nextStatus = currentStatus + 1;
 
-      // 状态 9（已到泰国仓库）：触发自动扣款
-      if (nextStatus === 9) {
+      // 状态 7（已到泰国仓库）：触发自动扣款
+      if (nextStatus === 7) {
         try {
           await Finance.chargeSubmission(subId, req.user.id, req.user.username);
           // 扣款成功：清除 pending 标记
@@ -170,8 +170,8 @@ const employeeReviewController = {
 
       // 记录日志
       const statusNames = {
-        1: '待审核', 2: '审核通过', 3: '待付款', 4: '已付款', 5: '中国仓库收货',
-        6: '运输中', 7: '清关中', 8: '已放行', 9: '已到泰国仓库', 10: '已派送', 11: '已完成',
+        1: '待审核', 2: '审核通过', 3: '中国仓库收货',
+        4: '运输中', 5: '清关中', 6: '已放行', 7: '已到泰国仓库', 8: '已派送', 9: '已完成',
       };
       await EmployeeReview.logReview(subId, req.user.id, 'advance_status',
         `状态推进: ${statusNames[currentStatus] || currentStatus} → ${statusNames[nextStatus] || nextStatus}`);

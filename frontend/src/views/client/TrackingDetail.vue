@@ -264,7 +264,7 @@
             <div class="pay-time">扣款时间：{{ fmt(data.finance.charge_log.charged_at) }}</div>
           </div>
         </div>
-        <div v-else-if="(data.tracking_status || 1) < 9" class="pay-block pay-pending">
+        <div v-else-if="(data.tracking_status || 1) < 7" class="pay-block pay-pending">
           <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
           <div class="pay-text">
             <div class="pay-title">待付款</div>

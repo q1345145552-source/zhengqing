@@ -89,8 +89,8 @@ router.get('/tracking/list', async (req, res) => {
     const offset = (page - 1) * pageSize;
     const statusFilter = parseInt(req.query.status) || 0;
     const params = [];
-    let where = `s.review_status IN ('approved', 'registered') AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 11`;
-    if (statusFilter >= 1 && statusFilter <= 11) where += ` AND s.tracking_status = ${statusFilter}`;
+    let where = `s.review_status IN ('approved', 'registered') AND s.status = 'submitted' AND s.tracking_status >= 2 AND s.tracking_status < 9`;
+    if (statusFilter >= 1 && statusFilter <= 9) where += ` AND s.tracking_status = ${statusFilter}`;
     if (search) {
       params.push(`%${search}%`);
       where += ` AND (COALESCE(s.application_no,'') ILIKE $${params.length} OR u.username ILIKE $${params.length} OR COALESCE(sp.thai_name,'') ILIKE $${params.length} OR COALESCE(sp.english_name,'') ILIKE $${params.length} OR COALESCE(ccd.company_name,'') ILIKE $${params.length})`;

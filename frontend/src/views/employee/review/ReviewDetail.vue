@@ -468,7 +468,7 @@
             推进至「{{ nextStatusLabel }}」
           </el-button>
         </div>
-        <el-alert v-if="nextTrackingStatus === 9" type="warning" :closable="false" show-icon style="margin-top:8px"
+        <el-alert v-if="nextTrackingStatus === 7" type="warning" :closable="false" show-icon style="margin-top:8px"
           title="注意" description="推进到「已到泰国仓库」将自动从客户余额扣款，请确保费用已确认且客户余额充足。" />
         <div v-if="!canAdvance" class="status-end">
           <el-icon color="#67C23A" size="24"><CircleCheckFilled /></el-icon>
@@ -478,7 +478,7 @@
     </el-card>
 
     <!-- 海关回传文件 -->
-    <el-card v-if="(data.tracking_status || 0) >= 9" class="customs-card" shadow="hover">
+    <el-card v-if="(data.tracking_status || 0) >= 7" class="customs-card" shadow="hover">
       <template #header><span><el-icon><FolderOpened /></el-icon> 海关回传文件</span></template>
       <div class="customs-upload">
         <el-form inline size="small">
@@ -871,7 +871,7 @@ const nextTrackingStatus = computed(() => {
 const nextStatusLabel = computed(() => getNextStatusLabel(data.tracking_status))
 const canAdvance = computed(() => {
   const ts = data.tracking_status || 1
-  return ts >= 2 && ts < 11
+  return ts >= 2 && ts < 9
 })
 
 async function handleAdvanceStatus() {
@@ -879,7 +879,7 @@ async function handleAdvanceStatus() {
   if (!next) return
 
   // 状态9需确认扣款
-  if (next === 9) {
+  if (next === 7) {
     try {
       await ElMessageBox.confirm(
         '推进到「已到泰国仓库」将自动从客户余额扣款。请确保费用已确认且客户余额充足。',
