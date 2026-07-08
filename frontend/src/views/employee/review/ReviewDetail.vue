@@ -542,6 +542,25 @@ const reviewForm = reactive({ hs_code: '', tax_rate: '', need_form_e: false, nee
 const nextForm = reactive({ next_account: '', register_status: '', notes: '' })
 const licenseDocs = ref([])
 
+// 审核表单自动保存（2秒防抖）
+let reviewFormTimer = null
+function autoSaveReviewForm() {
+  if (reviewFormTimer) clearTimeout(reviewFormTimer)
+  reviewFormTimer = setTimeout(async () => {
+    try {
+      await request.put('/employee/submissions/' + data.id + '/review-form', {
+        hs_code: reviewForm.hs_code || null,
+        tax_rate: reviewForm.tax_rate || null,
+        need_form_e: reviewForm.need_form_e,
+        need_license: reviewForm.need_license,
+      })
+    } catch { /* silent */ }
+  }, 2000)
+}
+
+// 监听审核表单变化，触发自动保存
+watch(reviewForm, () => { if (data.id) autoSaveReviewForm() }, { deep: true })
+
 async function setLicenseType(val) {
   try {
     await request.put('/employee/submissions/' + route.params.id + '/set-license-type', { license_type: val })

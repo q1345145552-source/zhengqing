@@ -59,6 +59,9 @@ router.get('/submissions', async (req, res) => {
 });
 router.get('/submissions/:id', controller.detail);
 router.put('/submissions/:id/review', controller.review);
+// 审核表单自动保存（HS Code、关税税率、Form E、许可证）
+router.put('/submissions/:id/review-form', controller.reviewForm);
+
 router.put('/submissions/:id/next-register', controller.nextRegister);
 router.put('/submissions/:id/advance-status', controller.advanceStatus);
 

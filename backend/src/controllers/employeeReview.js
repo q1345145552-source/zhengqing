@@ -194,6 +194,48 @@ const employeeReviewController = {
       return res.status(500).json({ code: 500, message: '服务器内部错误' });
     }
   },
+  /**
+   * PUT /api/employee/submissions/:id/review-form
+   * 自动保存审核表单（不改审核状态）
+   */
+  async reviewForm(req, res) {
+    const { query } = require('../db');
+    try {
+      const subId = req.params.id;
+      const { hs_code, tax_rate, need_form_e, need_license } = req.body;
+
+      const { rows: [existing] } = await query(
+        'SELECT id FROM submission_products WHERE submission_id = $1', [subId]
+      );
+      if (!existing) {
+        await query(
+          'INSERT INTO submission_products (submission_id, hs_code, tariff_rate, form_e_eligible, license_required) VALUES ($1,$2,$3,$4,$5)',
+          [subId, hs_code || null, tax_rate || null, need_form_e != null ? need_form_e : null, need_license != null ? need_license : null]
+        );
+      } else {
+        const fields = [];
+        const values = [subId];
+        let idx = 2;
+        if (hs_code !== undefined) { fields.push('hs_code = $' + (idx++)); values.push(hs_code); }
+        if (tax_rate !== undefined) { fields.push('tariff_rate = $' + (idx++)); values.push(tax_rate); }
+        if (need_form_e !== undefined) { fields.push('form_e_eligible = $' + (idx++)); values.push(need_form_e); }
+        if (need_license !== undefined) { fields.push('license_required = $' + (idx++)); values.push(need_license); }
+        if (fields.length > 0) {
+          fields.push('updated_at = CURRENT_TIMESTAMP');
+          await query(
+            'UPDATE submission_products SET ' + fields.join(', ') + ' WHERE submission_id = $1',
+            values
+          );
+        }
+      }
+
+      res.json({ code: 200, message: '已保存' });
+    } catch (err) {
+      console.error('[EmployeeReview] reviewForm error:', err);
+      res.status(500).json({ code: 500, message: '服务器内部错误' });
+    }
+  },
+
 };
 
 module.exports = employeeReviewController;
