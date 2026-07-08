@@ -321,7 +321,7 @@ function fileUrl(fileObj) {
     p = idx >= 0 ? sp.substring(idx) : ''
   }
   if (!p) return ''
-  return `http://localhost:3001${p}`
+  return p
 }
 
 function fmt(d) {

@@ -156,7 +156,7 @@
           <el-table-column label="文件类型" width="140"><template #default="{row}">{{ customsDocLabel(row.file_type) }}</template></el-table-column>
           <el-table-column prop="file_name" label="文件名" min-width="250" show-overflow-tooltip />
           <el-table-column label="上传时间" width="160"><template #default="{row}">{{ fmt(row.created_at) }}</template></el-table-column>
-          <el-table-column label="操作" width="80"><template #default="{row}"><el-link type="primary" :href="'http://localhost:3001'+row.file_path" target="_blank">下载</el-link></template></el-table-column>
+          <el-table-column label="操作" width="80"><template #default="{row}"><el-link type="primary" :href="row.file_path" target="_blank">下载</el-link></template></el-table-column>
         </el-table>
       </el-card>
 
@@ -227,10 +227,13 @@ onMounted(async () => {
 function customsDocLabel(t) { return { customs_release: '海关放行单', tax_certificate: '关税缴纳凭证', other: '其他' }[t] || t }
 function fileUrl(obj) {
   if (!obj) return ''
-  const p = obj.url || obj.stored_path || ''
-  if (!p) return ''
-  const idx = (obj.stored_path || '').indexOf('/uploads/')
-  return idx >= 0 ? 'http://localhost:3001' + obj.stored_path.substring(idx) : (p.startsWith('http') ? p : 'http://localhost:3001' + (p.startsWith('/') ? '' : '/') + p)
+  let p = obj.url || ''
+  if (!p) {
+    const sp = obj.stored_path || ''
+    const idx = sp.indexOf('/uploads/')
+    p = idx >= 0 ? sp.substring(idx) : ''
+  }
+  return p
 }
 function fmt(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
 </script>

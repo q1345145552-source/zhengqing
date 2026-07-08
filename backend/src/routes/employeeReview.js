@@ -175,15 +175,52 @@ router.post('/pending-charges/:id/retry', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }
 });
 
-// 海关回传文件
-router.post('/submissions/:id/customs-docs', async (req, res) => {
+// 海关回传文件上传目录
+const customsUploadDir = require('path').join(__dirname, '../../uploads/customs');
+if (!require('fs').existsSync(customsUploadDir)) require('fs').mkdirSync(customsUploadDir, { recursive: true });
+const customsUpload = require('multer')({
+  dest: customsUploadDir,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: function(req, file, cb) {
+    const allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf',
+                     'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                     'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (allowed.indexOf(file.mimetype) >= 0) cb(null, true);
+    else cb(new Error('不支持的文件类型: ' + file.mimetype), false);
+  }
+});
+const _customsMw = customsUpload.single('file');
+
+// 海关回传文件上传
+router.post('/submissions/:id/customs-docs', (req, res, next) => {
+  _customsMw(req, res, (err) => {
+    if (err) return res.status(400).json({ code: 400, message: err.message });
+    // 修复中文文件名乱码
+    if (req.file) {
+      try {
+        const buf = Buffer.from(req.file.originalname, 'latin1');
+        const restored = buf.toString('utf8');
+        if (restored !== req.file.originalname && /[\u0080-\uffff]/.test(restored)) {
+          req.file.originalname = restored;
+        }
+      } catch (e) {}
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const { query } = require('../db');
-    const { file_name, file_path, file_type, document_type_label } = req.body;
-    if (!file_name || !file_path) return res.status(400).json({ code: 400, message: '缺少文件信息' });
+    if (!req.file) return res.status(400).json({ code: 400, message: '请选择文件' });
+    const file_type = req.body.file_type || 'other';
+    const document_type_label = req.body.document_type_label || '';
+    const ext = require('path').extname(req.file.originalname);
+    const newName = Date.now() + '_' + Math.round(Math.random() * 1e9) + ext;
+    const destPath = require('path').join(customsUploadDir, newName);
+    require('fs').renameSync(req.file.path, destPath);
+    const file_path = '/uploads/customs/' + newName;
     const { rows: [doc] } = await query(
       `INSERT INTO customs_documents (submission_id, file_name, file_path, file_type, document_type_label, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [req.params.id, file_name, file_path, file_type || 'other', document_type_label || '', req.user.id]
+      [req.params.id, req.file.originalname, file_path, file_type, document_type_label, req.user.id]
     );
     res.json({ code: 200, message: '上传成功', data: doc });
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message }); }

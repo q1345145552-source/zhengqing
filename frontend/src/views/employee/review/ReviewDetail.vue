@@ -491,7 +491,7 @@
           </el-form-item>
           <el-form-item label="文件说明"><el-input v-model="customsLabel" placeholder="可选" style="width:160px" /></el-form-item>
           <el-form-item>
-            <el-upload :action="`/api/employee/submissions/${data.id}/customs-docs`" :headers="uploadHeaders" :on-success="onUploadSuccess" :before-upload="beforeUpload" :show-file-list="false">
+            <el-upload :action="`/api/employee/submissions/${data.id}/customs-docs`" :headers="uploadHeaders" :data="{ file_type: customsType, document_type_label: customsLabel }" :on-success="onUploadSuccess" :before-upload="beforeUpload" :show-file-list="false">
               <el-button type="primary" size="small"><el-icon><Upload /></el-icon> 上传文件</el-button>
             </el-upload>
           </el-form-item>
@@ -657,6 +657,15 @@ const customsDocs = ref([])
 const uploadHeaders = { Authorization: 'Bearer ' + localStorage.getItem('token') }
 
 function customsTypeLabel(t) { return { customs_release: '海关放行单', tax_certificate: '关税缴纳凭证', other: '其他' }[t] || t }
+function beforeUpload(file) {
+  const allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf',
+    'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+  if (!allowed.includes(file.type)) { ElMessage.error('不支持的文件类型'); return false }
+  if (file.size > 20 * 1024 * 1024) { ElMessage.error('文件大小不能超过20MB'); return false }
+  return true
+}
+
 async function loadCustomsDocs() {
   try { const r = await request.get(`/employee/submissions/${data.id}/customs-docs`); customsDocs.value = r.data || [] } catch { /* */ }
 }
