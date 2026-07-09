@@ -11,6 +11,6 @@ cd /app/backend
 echo "Installing backend dependencies..."
 npm install
 echo "Installing fonts..."
-apk add --no-cache font-noto-cjk font-noto-thai 2>/dev/null
+apk add --no-cache font-noto-thai 2>/dev/null
 echo "Starting backend..."
 exec node src/app.js
