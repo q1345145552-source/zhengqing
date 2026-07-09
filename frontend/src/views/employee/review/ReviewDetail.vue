@@ -22,6 +22,7 @@
           <el-descriptions :column="2" border size="small">
             <el-descriptions-item label="产品泰文名称">{{ step1?.thai_name || '-' }}</el-descriptions-item>
             <el-descriptions-item label="产品英文名称">{{ step1?.english_name || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="产品描述" :span="2">{{ step1?.product_description || '-' }}</el-descriptions-item>
             <el-descriptions-item label="产品图片" :span="2">
               <span v-if="!step1?.product_images?.length">无</span>
               <el-image

@@ -78,7 +78,7 @@
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="产品泰文名">{{ data.step1?.thai_name || '-' }}</el-descriptions-item>
           <el-descriptions-item label="产品英文名">{{ data.step1?.english_name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="产品描述">{{ data.step1?.license_notes || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="产品描述">{{ data.step1?.product_description || '-' }}</el-descriptions-item>
           <el-descriptions-item label="产品图片" :span="2">
             <template v-if="step1Images.length">
               <el-image v-for="(img,i) in step1Images" :key="i" :src="fileUrl(img)" style="width:60px;height:60px;margin-right:6px" fit="cover" :preview-src-list="step1Images.map(f=>fileUrl(f))" />

@@ -45,6 +45,18 @@
         />
       </el-form-item>
 
+      <!-- 产品描述 -->
+      <el-form-item label="产品描述">
+        <el-input
+          v-model="form.product_description"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入产品描述（选填，最多500字）"
+          maxlength="500"
+          show-word-limit
+        />
+      </el-form-item>
+
       <!-- 员工确认信息（只读展示） -->
       <el-divider content-position="left">
         <el-icon><UserFilled /></el-icon> 产品确认信息（由审核人员填写）
@@ -117,6 +129,7 @@ const form = reactive({
   product_images: [],
   thai_name: '',
   english_name: '',
+  product_description: '',
   ...props.formData,
 })
 
@@ -155,6 +168,7 @@ watch(() => props.formData, (newVal) => {
   if (!newVal || Object.keys(newVal).length === 0) return
   if (newVal.thai_name !== undefined) form.thai_name = newVal.thai_name || ''
   if (newVal.english_name !== undefined) form.english_name = newVal.english_name || ''
+  if (newVal.product_description !== undefined) form.product_description = newVal.product_description || ''
   if (newVal.product_images !== undefined) {
     form.product_images = newVal.product_images
     fileList.value = newVal.product_images.map((img, i) => ({

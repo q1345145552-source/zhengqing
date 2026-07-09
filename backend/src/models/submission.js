@@ -98,15 +98,16 @@ const Submission = {
 
   async saveStep1(submissionId, data) {
     const result = await query(
-      `INSERT INTO submission_products (submission_id, product_images, thai_name, english_name)
-       VALUES ($1, $2::jsonb, $3, $4)
+      `INSERT INTO submission_products (submission_id, product_images, thai_name, english_name, product_description)
+       VALUES ($1, $2::jsonb, $3, $4, $5)
        ON CONFLICT (submission_id) DO UPDATE SET
          product_images = COALESCE($2::jsonb, submission_products.product_images),
          thai_name = COALESCE($3, submission_products.thai_name),
          english_name = COALESCE($4, submission_products.english_name),
+         product_description = COALESCE($5, submission_products.product_description),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, JSON.stringify(data.product_images || []), data.thai_name || null, data.english_name || null]
+      [submissionId, JSON.stringify(data.product_images || []), data.thai_name || null, data.english_name || null, data.product_description || null]
     );
     return result.rows[0];
   },
