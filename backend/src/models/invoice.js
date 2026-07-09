@@ -3,7 +3,7 @@ const path = require('path');
 const { query } = require('../db');
 const EmployeeReview = require('./employeeReview');
 
-// 字体文件路径（系统安装的 Noto 字体）
+// 字体文件路径
 const FONT_SC = path.join(__dirname, '../../fonts/NotoSansSC-Regular.ttf');
 const FONT_TH = path.join(__dirname, '../../fonts/Sarabun-Regular.ttf');
 
@@ -16,16 +16,22 @@ const translations = {
     client: '客户',
     company: '公司名称',
     taxId: '公司税号',
+    address: '公司地址',
     route: '路线',
     costBreakdown: '费用明细',
     item: '项目',
     amount: '金额',
-    total: '总计',
-    chargeTime: '扣款时间',
-    chargeAmount: '扣款金额',
+    subtotal: '费用总计',
+    vat: '增值税 VAT 7%',
+    grandTotal: '含税总计',
     bankInfo: '收款账户',
     bankName: '开户行：中国银行',
     accountNo: '账号：6217 0000 0000 0000 000',
+    billFrom: '开票方',
+    billCompany: 'Double H Cargo Thailand Co., Ltd.',
+    billTaxId: '税号：0105555123456',
+    billAddress: '地址：曼谷市然那哇区',
+    billPhone: '电话：02-000-0000',
     remark: '备注',
     remarkText: '本发票为电子发票，与纸质发票具有同等法律效力',
     currency: '泰铢',
@@ -40,19 +46,26 @@ const translations = {
     client: 'ลูกค้า',
     company: 'ชื่อบริษัท',
     taxId: 'TAX ID',
+    address: 'ที่อยู่บริษัท',
     route: 'เส้นทาง',
     costBreakdown: 'รายละเอียดค่าธรรมเนียม',
     item: 'รายการ',
     amount: 'จำนวนเงิน',
-    total: 'รวมทั้งสิ้น',
-    chargeTime: 'เวลาหักเงิน',
-    chargeAmount: 'จำนวนเงินที่หัก',
+    subtotal: 'รวมค่าธรรมเนียม',
+    vat: 'ภาษีมูลค่าเพิ่ม 7%',
+    grandTotal: 'รวมทั้งสิ้น (รวมภาษี)',
     bankInfo: 'บัญชีรับเงิน',
     bankName: 'ธนาคาร：Bank of China',
     accountNo: 'เลขที่บัญชี：6217 0000 0000 0000 000',
+    billFrom: 'ผู้เรียกเก็บ',
+    billCompany: 'Double H Cargo Thailand Co., Ltd.',
+    billTaxId: 'TAX ID：0105555123456',
+    billAddress: 'ที่อยู่：กรุงเทพฯ เขตยานนาวา',
+    billPhone: 'โทร：02-000-0000',
     remark: 'หมายเหตุ',
     remarkText: 'ใบแจ้งหนี้นี้เป็นใบแจ้งหนี้อิเล็กทรอนิกส์ มีผลทางกฎหมายเทียบเท่าใบแจ้งหนี้กระดาษ',
     currency: 'บาท',
+    customsDuty: 'ค่าภาษีศุลกากร (เจ้าหน้าที่เป็นผู้ชำระ)',
     routes: { nanning_bangkok: 'หนานหนิง ไปยัง กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น ไปยัง กรุงเทพ', yiwu_bangkok: 'อี้อู ไปยัง กรุงเทพ' },
     feeNames: {
       freight_cbm: 'ค่าขนส่งระหว่างประเทศ (ตามปริมาตร)',
@@ -65,7 +78,6 @@ const translations = {
       wooden_box: 'ค่าธรรมเนียมบรรจุภัณฑ์ไม้',
       storage: 'ค่าจัดเก็บสินค้า',
     },
-    customsDuty: 'ค่าภาษีศุลกากร (เจ้าหน้าที่เป็นผู้ชำระ)',
   },
 };
 
@@ -98,7 +110,6 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.on('error', reject);
 
     const pageW = doc.page.width - 80;
-    // font is registered above
 
     // === Header ===
     doc.fontSize(26).font(font).text(t.title, { align: 'center' });
@@ -110,10 +121,12 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#409EFF');
     doc.moveDown(0.8);
 
-    // Order info
+    // === Customer Info (from submission_company_docs) ===
     doc.fontSize(11);
     const routeName = t.routes[data.international_route] || data.international_route || '-';
     const companyName = data.step2?.company_name || data.client_name || '-';
+    const companyAddress = data.step2?.thai_address || '';
+    const companyTaxId = data.step2?.tax_id || '';
     
     const leftX = 40;
     doc.text(`${tStr(t.orderNo)} ${data.application_no || '#' + data.id}`, leftX);
@@ -121,8 +134,20 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.text(`${tStr(t.client)} ${data.client_name || '-'}`, leftX);
     doc.text(`${tStr(t.route)} ${routeName}`, leftX + 260);
     doc.text(`${tStr(t.company)} ${companyName}`, leftX);
-    const taxId = data.step2?.tax_id || '';
-    if (taxId) doc.text(`${tStr(t.taxId)} ${taxId}`, leftX);
+    if (companyTaxId) doc.text(`${tStr(t.taxId)} ${companyTaxId}`, leftX);
+    if (companyAddress) doc.text(`${tStr(t.address)} ${companyAddress}`, leftX);
+    doc.moveDown(0.3);
+
+    // === Billing Party (Double H Cargo) ===
+    doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#ddd');
+    doc.moveDown(0.3);
+    doc.fontSize(11).fillColor('#333').text(t.billFrom, leftX);
+    doc.moveDown(0.2);
+    doc.fillColor('#000').fontSize(10);
+    doc.text(t.billCompany, leftX);
+    doc.text(t.billTaxId, leftX);
+    doc.text(t.billAddress, leftX);
+    doc.text(t.billPhone, leftX);
     doc.moveDown(0.8);
 
     // === Cost Breakdown Table ===
@@ -140,33 +165,32 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#eee');
     doc.moveDown(0.3);
 
-    // Cost rows
+    // Cost rows — only show selected=true
     doc.fillColor('#000');
     const finance = data.finance || {};
     
     function addRow(label, amt, isBold) {
       const y = doc.y;
-      if (isBold) doc.font(font);
-      else doc.font(font);
+      doc.font(font);
       // 中文模式下替换 ฿ 为泰铢，泰文模式下替换全角冒号
       let safeLabel = label;
       if (lang === 'zh') safeLabel = String(label).replace(/฿/g, '泰铢');
       else if (lang === 'th') safeLabel = String(label).replace(/：/g, ':');
-      doc.text(safeLabel, col1X, y);
+      doc.text(safeLabel + '', col1X, y);
       doc.text(`${(amt || 0).toLocaleString()} ${t.currency}`, col2X, y, { align: 'right', width: 100 });
       doc.moveDown(0.15);
     }
 
-    // Freight
-    if (finance.freight_cbm?.selected && finance.freight_cbm.amount > 0) {
+    // Freight (selected=true only)
+    if (finance.freight_cbm?.selected && (finance.freight_cbm.amount || 0) > 0) {
       addRow(feeLabel(finance.freight_cbm) || t.item, finance.freight_cbm.amount);
     }
-    if (finance.freight_kg?.selected && finance.freight_kg.amount > 0) {
+    if (finance.freight_kg?.selected && (finance.freight_kg.amount || 0) > 0) {
       addRow(feeLabel(finance.freight_kg) || t.item, finance.freight_kg.amount);
     }
 
-    // Services
-    (finance.services || []).filter(s => s.selected && s.amount > 0).forEach(s => {
+    // Services (selected=true only)
+    (finance.services || []).filter(s => s.selected && (s.amount || 0) > 0).forEach(s => {
       addRow(feeLabel(s), s.amount);
     });
 
@@ -179,23 +203,27 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#409EFF');
     doc.moveDown(0.3);
 
-    // Total
+    // === Subtotal ===
+    const subtotal = finance.total_amount || 0;
     doc.fontSize(14).fillColor('#E6A23C');
-    doc.text(`${tStr(t.total)} ${finance.total_amount.toLocaleString()} ${t.currency}`, { align: 'right' });
+    doc.text(`${tStr(t.subtotal)} ${subtotal.toLocaleString()} ${t.currency}`, { align: 'right' });
+    doc.fillColor('#000').fontSize(10);
+
+    // === VAT 7% ===
+    const vatAmount = Math.round(subtotal * 0.07);
+    doc.fontSize(12).fillColor('#666');
+    doc.text(`${tStr(t.vat)} ${vatAmount.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
     doc.moveDown(0.8);
 
-    // Charge info
-    if (finance.charge_log?.status === 'charged') {
-      doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#ddd');
-      doc.moveDown(0.5);
-      doc.fontSize(11).fillColor('#333');
-      doc.text(`${tStr(t.chargeTime)} ${fmtDate(new Date(finance.charge_log.charged_at))}`, leftX);
-      doc.text(`${tStr(t.chargeAmount)} ${parseFloat(finance.charge_log.total_amount).toLocaleString()} ${t.currency}`, leftX);
-    }
+    // === Grand Total (subtotal + VAT) ===
+    const grandTotal = subtotal + vatAmount;
+    doc.fontSize(16).fillColor('#E6A23C');
+    doc.text(`${tStr(t.grandTotal)} ${grandTotal.toLocaleString()} ${t.currency}`, { align: 'right' });
+    doc.fillColor('#000').fontSize(10);
+    doc.moveDown(0.8);
 
-    // Bank info
-    doc.moveDown(1.5);
+    // === Bank info ===
     doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#ddd');
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#333');
@@ -203,7 +231,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.text(tStr(t.bankName), leftX + 15);
     doc.text(tStr(t.accountNo), leftX + 15);
 
-    // Remark
+    // === Remark ===
     doc.moveDown(1);
     doc.fontSize(8).fillColor('#999');
     doc.text(t.remarkText, { align: 'center' });
