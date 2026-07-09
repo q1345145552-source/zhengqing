@@ -72,6 +72,7 @@ const translations = {
       freight_kg: 'ค่าขนส่งระหว่างประเทศ (ตามน้ำหนัก)',
       domestic_freight: 'ค่าขนส่งภายในประเทศ',
       thai_customs: 'ค่าบริการพิธีการศุลกากร',
+      customs_handling: 'ค่าธรรมเนียมการผ่านพิธีการศุลกากร',
       china_customs: 'ค่าธรรมเนียมศุลกากรจีน',
       form_e: 'ค่าธรรมเนียม Form E',
       pallet: 'ค่าธรรมเนียมพาเลท',

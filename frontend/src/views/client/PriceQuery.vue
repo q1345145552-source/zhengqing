@@ -115,6 +115,7 @@ const addonSelected = reactive({
   form_e: false,
   china_customs: false,
   thai_customs: false,
+  customs_handling: false,
   pallet: false,
   wooden_box: false,
 })
@@ -141,6 +142,7 @@ const addonTotal = computed(() => {
   if (addonSelected.form_e) total += findPrice('form_e')
   if (addonSelected.china_customs) total += findPrice('china_customs')
   if (addonSelected.thai_customs) total += findPrice('thai_customs')
+  if (addonSelected.customs_handling) total += findPrice('customs_handling')
   if (addonSelected.pallet) {
     const qty = addonQuantity.pallet || 1
     total += findPrice('pallet') * qty

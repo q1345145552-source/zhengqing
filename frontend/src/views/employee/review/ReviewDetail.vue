@@ -306,7 +306,7 @@
               <el-table-column label="金额" width="120"><template #default="{row}">฿{{ row.amount }}</template></el-table-column>
               <el-table-column v-if="data.review_status !== 'registered'" label="勾选" width="80">
                 <template #default="{row}">
-                  <el-switch v-model="row.selected" size="small" :disabled="row.fee_type === 'thai_customs' || (row.fee_type === 'china_customs' && step4?.need_rebate)" @change="recalcTotalWithSave" />
+                  <el-switch v-model="row.selected" size="small" :disabled="row.fee_type === 'thai_customs' || row.fee_type === 'customs_handling' || (row.fee_type === 'china_customs' && step4?.need_rebate)" @change="recalcTotalWithSave" />
                 </template>
               </el-table-column>
             </el-table>
@@ -662,6 +662,7 @@ const serviceCharges = computed(() => {
   // 泰国清关费始终必选，中国报关费(需要退税时)必选
   list.forEach(c => {
     if (c.fee_type === 'thai_customs') c.selected = true
+    if (c.fee_type === 'customs_handling') c.selected = true
     if (c.fee_type === 'china_customs' && step4.value?.need_rebate) c.selected = true
   })
   return list

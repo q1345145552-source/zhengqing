@@ -124,6 +124,7 @@ const addonList = reactive([
   { key: 'form_e', label: 'Form E 原产地证费', price: 4000, unit: '', checked: false },
   { key: 'china_customs', label: '中国报关费', price: 4000, unit: '', checked: false },
   { key: 'thai_customs', label: '泰国清关费', price: 3500, unit: '', checked: false },
+  { key: 'customs_handling', label: '清关手续费', price: 200, unit: '', checked: false },
   { key: 'pallet', label: '打托盘费', price: 1800, unit: '/托', checked: false },
   { key: 'wooden_box', label: '木箱打包费', price: 2500, unit: '/m³', checked: false },
 ])

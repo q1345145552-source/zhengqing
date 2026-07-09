@@ -143,6 +143,9 @@ const Finance = {
     const rThaiCustoms = globalRuleMap.thai_customs;
     if (rThaiCustoms) charges.push({ fee_type: 'thai_customs', fee_name: rThaiCustoms.fee_name, quantity: 1, unit_price: parseFloat(rThaiCustoms.unit_price), amount: parseFloat(rThaiCustoms.unit_price), is_optional: true, selected: false });
 
+    const rCustomsHandling = globalRuleMap.customs_handling;
+    if (rCustomsHandling) charges.push({ fee_type: 'customs_handling', fee_name: rCustomsHandling.fee_name, quantity: 1, unit_price: parseFloat(rCustomsHandling.unit_price), amount: parseFloat(rCustomsHandling.unit_price), is_optional: true, selected: false });
+
     const rChinaCustoms = globalRuleMap.china_customs;
     if (rChinaCustoms) charges.push({ fee_type: 'china_customs', fee_name: rChinaCustoms.fee_name, quantity: 1, unit_price: parseFloat(rChinaCustoms.unit_price), amount: parseFloat(rChinaCustoms.unit_price), is_optional: true, selected: false });
 
@@ -205,11 +208,13 @@ const Finance = {
       );
       const needRebate = rebateRow?.need_rebate === true;
 
-      // 应用必选逻辑：thai_customs 始终必选，china_customs 仅退税时展示并必选
+      // 应用必选逻辑：thai_customs/customs_handling 始终必选，china_customs 仅退税时展示并必选
       const chargesToSave = [];
       for (const c of charges) {
         if (c.fee_type === 'thai_customs') {
           c.selected = true;  // 泰国清关费始终必选
+        } else if (c.fee_type === 'customs_handling') {
+          c.selected = true;  // 清关手续费始终必选
         } else if (c.fee_type === 'china_customs') {
           if (!needRebate) continue;  // 不退税时不展示
           c.selected = true;  // 退税时必选
@@ -289,8 +294,9 @@ const Finance = {
     const needRebate = rebateRow?.need_rebate === true;
 
     for (const c of charges) {
-      // 强制必选逻辑：thai_customs 始终 true，china_customs 退税时 true
+      // 强制必选逻辑：thai_customs/customs_handling 始终 true，china_customs 退税时 true
       if (c.fee_type === 'thai_customs') c.selected = true;
+      if (c.fee_type === 'customs_handling') c.selected = true;
       if (c.fee_type === 'china_customs') c.selected = needRebate;
       await query(
         `UPDATE submission_charges SET selected = $3, quantity = $4, amount = $5, updated_at = CURRENT_TIMESTAMP
