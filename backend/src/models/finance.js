@@ -225,13 +225,7 @@ const Finance = {
           if (!needRebate) continue;  // 不退税时不展示
           c.selected = true;  // 退税时必选
         } else if (c.fee_type === 'form_e') {
-          // 如果员工已经手动设置过form_e（oldSelectedMap中有记录），保留员工选择；
-          // 否则根据客户预报单自动设置
-          if (c.fee_type in oldSelectedMap) {
-            c.selected = oldSelectedMap[c.fee_type];
-          } else {
-            c.selected = needFormE;
-          }
+          c.selected = needFormE;  // 始终依客户预报单选择
         } else if (oldSelectedMap[c.fee_type] === true) {
           c.selected = true;  // 其他附加服务保留旧勾选
         }
