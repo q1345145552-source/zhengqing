@@ -128,11 +128,36 @@ const employeeReviewController = {
       }
 
       const currentStatus = sub.tracking_status || 1;
-      if (currentStatus >= 11) {
+      if (currentStatus >= 9) {
         return res.status(400).json({ code: 400, message: '已经是最终状态，无法继续推进' });
       }
 
       const nextStatus = currentStatus + 1;
+
+      // ========== 前置条件校验 ==========
+      // 推进到03（中国仓库收货）：批次号必填
+      if (nextStatus === 3) {
+        const { rows: [s] } = await query('SELECT batch_number FROM submissions WHERE id = $1', [subId]);
+        if (!s?.batch_number) {
+          return res.status(400).json({ code: 400, message: '请先在发货信息中填写批次号' });
+        }
+      }
+      // 推进到04（运输中）：运单号必填
+      if (nextStatus === 4) {
+        const { rows: [s] } = await query('SELECT tracking_number FROM submissions WHERE id = $1', [subId]);
+        if (!s?.tracking_number) {
+          return res.status(400).json({ code: 400, message: '客户尚未填写运单号，无法推进' });
+        }
+      }
+      // 推进到08（已派送）：扣款必须已成功
+      if (nextStatus === 8) {
+        const { rows: [log] } = await query(
+          "SELECT status FROM submission_charge_logs WHERE submission_id = $1 ORDER BY id DESC LIMIT 1", [subId]
+        );
+        if (!log || log.status !== 'charged') {
+          return res.status(400).json({ code: 400, message: '扣款未完成，请先确认扣款' });
+        }
+      }
 
       // 状态 7（已到泰国仓库）：触发自动扣款
       if (nextStatus === 7) {
