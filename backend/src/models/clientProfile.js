@@ -29,15 +29,16 @@ const ClientProfile = {
   async createCompanyDoc(userId, data) {
     const result = await query(
       `INSERT INTO client_company_docs (
-         user_id, company_name, thai_address,
+         user_id, company_name, thai_address, tax_id,
          dbd_file, pp20_file, company_stamp_file,
          director_passport_file, legal_rep_info
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         userId,
         data.company_name || null,
         data.thai_address || null,
+        data.tax_id || null,
         JSON.stringify(data.dbd_file || {}),
         JSON.stringify(data.pp20_file || {}),
         JSON.stringify(data.company_stamp_file || {}),
@@ -62,6 +63,7 @@ const ClientProfile = {
 
     setIf('company_name', data.company_name);
     setIf('thai_address', data.thai_address);
+    setIf('tax_id', data.tax_id);
     setIf('dbd_file', data.dbd_file);
     setIf('pp20_file', data.pp20_file);
     setIf('company_stamp_file', data.company_stamp_file);

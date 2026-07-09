@@ -99,6 +99,7 @@
       <el-card shadow="never"><template #header><div class="block-title"><el-icon><Office /></el-icon> 公司信息</div></template>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="公司名称">{{ data.step2?.company_name || data.client_name || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="公司税号">{{ data.step2?.tax_id || '-' }}</el-descriptions-item>
           <el-descriptions-item label="泰国地址">{{ data.step2?.thai_address || '-' }}</el-descriptions-item>
         </el-descriptions>
         <h4 style="margin-top:12px">公司文件</h4>

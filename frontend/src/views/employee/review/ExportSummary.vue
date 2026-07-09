@@ -57,6 +57,7 @@
         <template #header><div class="section-title"><el-icon><Office /></el-icon> 二、公司资料</div></template>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="公司名称">{{ data.step2?.company_name || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="公司税号">{{ data.step2?.tax_id || '-' }}</el-descriptions-item>
           <el-descriptions-item label="泰国地址">{{ data.step2?.thai_address || '-' }}</el-descriptions-item>
         </el-descriptions>
         <h4 class="sub-header" style="margin-top:16px">已上传文件</h4>

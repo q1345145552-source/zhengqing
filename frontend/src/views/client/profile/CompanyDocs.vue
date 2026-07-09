@@ -52,6 +52,10 @@
           <el-input v-model="form.thai_address" type="textarea" :rows="2" placeholder="省/市/区/详细地址" maxlength="500" />
         </el-form-item>
 
+        <el-form-item label="公司税号 (TAX ID)">
+          <el-input v-model="form.tax_id" placeholder="泰国公司税号（选填）" maxlength="50" />
+        </el-form-item>
+
         <el-form-item label="法人信息">
           <el-row :gutter="12">
             <el-col :span="8">
@@ -143,6 +147,7 @@ const formRef = ref(null)
 
 const emptyForm = () => ({
   company_name: '',
+  tax_id: '',
   thai_address: '',
   legal_rep_info: { name: '', passport_no: '', phone: '' },
   dbd_file: null,
@@ -171,6 +176,7 @@ function editDoc(doc) {
   editingDoc.value = doc
   form.company_name = doc.company_name || ''
   form.thai_address = doc.thai_address || ''
+  form.tax_id = doc.tax_id || ''
   form.legal_rep_info = doc.legal_rep_info && typeof doc.legal_rep_info === 'object'
     ? { ...doc.legal_rep_info }
     : { name: '', passport_no: '', phone: '' }
@@ -214,6 +220,7 @@ async function handleSave() {
     const data = {
       company_name: form.company_name,
       thai_address: form.thai_address,
+      tax_id: form.tax_id,
       legal_rep_info: form.legal_rep_info,
       dbd_file: form.dbd_file,
       pp20_file: form.pp20_file,

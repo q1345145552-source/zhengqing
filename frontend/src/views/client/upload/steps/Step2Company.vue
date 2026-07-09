@@ -128,6 +128,15 @@
         </div>
       </el-form-item>
 
+      <!-- 公司税号 -->
+      <el-form-item label="公司税号 (TAX ID)">
+        <el-input
+          v-model="form.tax_id"
+          placeholder="请填写公司税号（选填）"
+          maxlength="50"
+        />
+      </el-form-item>
+
       <!-- 泰国收货地址 -->
       <el-form-item label="泰国收货地址" required>
         <el-input
@@ -172,6 +181,7 @@ const form = reactive({
   company_stamp_file: props.formData?.company_stamp_file || null,
   director_passport_file: props.formData?.director_passport_file || null,
   thai_address: props.formData?.thai_address || '',
+  tax_id: props.formData?.tax_id || '',
 })
 
 // 从 Step1 审核结果中判断是否需要进口许可证
@@ -182,7 +192,7 @@ onMounted(async () => {
     const res = await getCompanyDocs()
     savedDocs.value = res.data || []
     // 如果当前步骤已有保存的数据（从 formData 恢复），不要用公司资料库覆盖
-    const hasStepData = form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address
+    const hasStepData = form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address || form.tax_id
     if (savedDocs.value.length > 0 && !hasStepData) {
       selectedDocId.value = savedDocs.value[0].id
       fillFromDoc(savedDocs.value[0])
@@ -198,6 +208,7 @@ watch(() => props.formData, (newVal) => {
   if (newVal.company_stamp_file !== undefined) form.company_stamp_file = newVal.company_stamp_file
   if (newVal.director_passport_file !== undefined) form.director_passport_file = newVal.director_passport_file
   if (newVal.thai_address !== undefined) form.thai_address = newVal.thai_address || ''
+  if (newVal.tax_id !== undefined) form.tax_id = newVal.tax_id || ''
 }, { deep: true, immediate: false })
 
 function onSelectDoc(id) {
@@ -205,7 +216,7 @@ function onSelectDoc(id) {
     // 重新上传
     Object.assign(form, {
       dbd_file: null, pp20_file: null, company_stamp_file: null,
-      director_passport_file: null, thai_address: '',
+      director_passport_file: null, thai_address: '', tax_id: '',
     })
     emit('update', { ...form })
     return
@@ -221,6 +232,7 @@ function fillFromDoc(doc) {
     company_stamp_file: isFileObj(doc.company_stamp_file) ? doc.company_stamp_file : null,
     director_passport_file: isFileObj(doc.director_passport_file) ? doc.director_passport_file : null,
     thai_address: doc.thai_address || '',
+    tax_id: doc.tax_id || '',
   })
   emit('update', { ...form })
 }

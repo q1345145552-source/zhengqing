@@ -118,6 +118,7 @@
               <el-tag v-else type="info" size="small">未上传</el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="泰国地址">{{ step2?.thai_address || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="公司税号">{{ step2?.tax_id || '-' }}</el-descriptions-item>
           </el-descriptions>
           <el-row :gutter="12" style="margin-top:12px">
             <el-col :span="6" v-for="f in step2Files" :key="f.label">

@@ -15,6 +15,7 @@ const translations = {
     date: '日期',
     client: '客户',
     company: '公司名称',
+    taxId: '公司税号',
     route: '路线',
     costBreakdown: '费用明细',
     item: '项目',
@@ -38,6 +39,7 @@ const translations = {
     date: 'วันที่',
     client: 'ลูกค้า',
     company: 'ชื่อบริษัท',
+    taxId: 'TAX ID',
     route: 'เส้นทาง',
     costBreakdown: 'รายละเอียดค่าธรรมเนียม',
     item: 'รายการ',
@@ -119,6 +121,8 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.text(`${tStr(t.client)} ${data.client_name || '-'}`, leftX);
     doc.text(`${tStr(t.route)} ${routeName}`, leftX + 260);
     doc.text(`${tStr(t.company)} ${companyName}`, leftX);
+    const taxId = data.step2?.tax_id || '';
+    if (taxId) doc.text(`${tStr(t.taxId)} ${taxId}`, leftX);
     doc.moveDown(0.8);
 
     // === Cost Breakdown Table ===
