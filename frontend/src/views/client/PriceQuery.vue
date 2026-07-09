@@ -54,7 +54,7 @@
           <div class="addon-section">
             <div class="addon-title">附加服务（可选勾选）</div>
             <div v-for="s in addonServiceList" :key="s.fee_type" class="addon-row">
-              <el-checkbox v-model="addonSelected[s.fee_type]">
+              <el-checkbox v-model="addonSelected[s.fee_type]" :disabled="s.fee_type === 'thai_customs' || s.fee_type === 'customs_handling'">
                 <span class="addon-label">{{ s.fee_name }}</span>
                 <span class="addon-price">{{ s.unit_price.toLocaleString() }} ฿</span>
                 <span v-if="s.description" class="addon-desc">{{ s.description }}</span>
@@ -114,8 +114,8 @@ const calcLoading = ref(false)
 const addonSelected = reactive({
   form_e: false,
   china_customs: false,
-  thai_customs: false,
-  customs_handling: false,
+  thai_customs: true,
+  customs_handling: true,
   pallet: false,
   wooden_box: false,
 })

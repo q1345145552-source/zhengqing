@@ -123,8 +123,8 @@ const servicePrices = ref({})
 const addonList = reactive([
   { key: 'form_e', label: 'Form E 原产地证费', price: 4000, unit: '', checked: false },
   { key: 'china_customs', label: '中国报关费', price: 4000, unit: '', checked: false },
-  { key: 'thai_customs', label: '泰国清关费', price: 3500, unit: '', checked: false },
-  { key: 'customs_handling', label: '清关手续费', price: 200, unit: '', checked: false },
+  { key: 'thai_customs', label: '泰国清关费', price: 3500, unit: '', checked: true },
+  { key: 'customs_handling', label: '清关手续费', price: 200, unit: '', checked: true },
   { key: 'pallet', label: '打托盘费', price: 1800, unit: '/托', checked: false },
   { key: 'wooden_box', label: '木箱打包费', price: 2500, unit: '/m³', checked: false },
 ])
@@ -172,6 +172,7 @@ const addonTotal = computed(() => {
   if (addonList.find(a => a.key === 'form_e')?.checked) t += addonList.find(a => a.key === 'form_e').price
   if (addonList.find(a => a.key === 'china_customs')?.checked) t += addonList.find(a => a.key === 'china_customs').price
   if (addonList.find(a => a.key === 'thai_customs')?.checked) t += addonList.find(a => a.key === 'thai_customs').price
+  if (addonList.find(a => a.key === 'customs_handling')?.checked) t += addonList.find(a => a.key === 'customs_handling').price
   if (addonList.find(a => a.key === 'pallet')?.checked) t += addonList.find(a => a.key === 'pallet').price * (addonQty.pallet || 1)
   if (addonList.find(a => a.key === 'wooden_box')?.checked) {
     const cbm = addonQty.wooden_box || 0
