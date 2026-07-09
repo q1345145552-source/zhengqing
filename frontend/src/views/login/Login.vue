@@ -99,12 +99,17 @@ async function handleLogin() {
     ElMessage.success('欢迎回来，' + user.username + '！')
     const redirect = route.query.redirect || authStore.homePage
     console.log('[Login] redirect to:', redirect, 'role:', user.role)
-    await router.push(redirect).catch((navErr) => {
-      // 路由懒加载组件失败或其他导航错误
+    const navResult = await router.push(redirect).catch((navErr) => {
+      // 路由导航失败（如权限不足），清除状态后提示
       console.error('[Login] Navigation failed:', navErr)
-      // 尝试用 location 直接跳转作为兜底
-      window.location.href = redirect
+      authStore.logout()
+      ElMessage.error('登录异常，请重新尝试')
+      return null
     })
+    if (navResult === null) {
+      // 导航被拒绝，留在登录页
+      return
+    }
   } catch (err) {
     console.error('Login failed:', err)
     ElMessage.error('登录失败：' + (err.message || '请检查账号密码'))

@@ -363,10 +363,20 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 检查角色权限
+  // 检查角色权限（确保 role 已加载，空 role 视为未登录）
   const routeRole = to.meta.role
-  if (routeRole && authStore.role !== routeRole) {
-    return next('/403')
+  if (routeRole) {
+    if (!authStore.role) {
+      // role 为空说明 user 数据异常，重新拉取
+      const user = await authStore.fetchUser()
+      if (!user || !authStore.role) {
+        await authStore.logout()
+        return next({ path: '/login', query: { redirect: to.fullPath } })
+      }
+    }
+    if (authStore.role !== routeRole) {
+      return next('/403')
+    }
   }
 
   next()
