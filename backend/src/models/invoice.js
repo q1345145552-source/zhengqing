@@ -4,7 +4,7 @@ const { query } = require('../db');
 const EmployeeReview = require('./employeeReview');
 
 // 字体文件路径（系统安装的 Noto 字体）
-const FONT_SC = '/usr/share/fonts/noto/NotoSansCJK-Regular.ttc';
+const FONT_SC = path.join(__dirname, '../../fonts/NotoSansSC-Regular.ttf');
 const FONT_TH = '/usr/share/fonts/noto/NotoSansThai-Regular.ttf';
 
 const translations = {
