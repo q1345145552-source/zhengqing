@@ -749,7 +749,7 @@ async function loadDetail() {
       chargeLog.value = fc.data.charge_log || null
     } catch { /* ignore */ }
     // 回填 Form E
-    freightParams.need_form_e = data.step1?.form_e_eligible || false
+    freightParams.need_form_e = data.step5?.need_form_e ?? data.step1?.form_e_eligible ?? false
 
     customsDutyForm.amount = parseFloat(data.customs_duty_amount) || 0
     // 回填客户预报单数据（优先step5，回退到submissions表字段）
@@ -765,7 +765,7 @@ async function loadDetail() {
     if (step1.value) {
       reviewForm.hs_code = step1.value.hs_code || ''
       reviewForm.tax_rate = step1.value.tariff_rate || ''
-      reviewForm.need_form_e = step1.value.form_e_eligible || false
+      reviewForm.need_form_e = step1.value?.form_e_eligible ?? data.step5?.need_form_e ?? false
       reviewForm.need_license = step1.value.license_required || false
       reviewForm.license_type = data.license_type || step1.value.license_type || ''
     }
