@@ -208,7 +208,13 @@ const Finance = {
       );
       const needRebate = rebateRow?.need_rebate === true;
 
-      // 应用必选逻辑：thai_customs/customs_handling 始终必选，china_customs 仅退税时展示并必选
+      // 查询客户预报单中的 Form E 选择
+      const { rows: [shipRow] } = await query(
+        'SELECT need_form_e FROM submission_shipments WHERE submission_id = $1', [submissionId]
+      );
+      const needFormE = shipRow?.need_form_e === true;
+
+      // 应用必选逻辑：thai_customs/customs_handling 始终必选，china_customs 仅退税时展示并必选，form_e 依客户选择
       const chargesToSave = [];
       for (const c of charges) {
         if (c.fee_type === 'thai_customs') {
@@ -218,6 +224,14 @@ const Finance = {
         } else if (c.fee_type === 'china_customs') {
           if (!needRebate) continue;  // 不退税时不展示
           c.selected = true;  // 退税时必选
+        } else if (c.fee_type === 'form_e') {
+          // 如果员工已经手动设置过form_e（oldSelectedMap中有记录），保留员工选择；
+          // 否则根据客户预报单自动设置
+          if (c.fee_type in oldSelectedMap) {
+            c.selected = oldSelectedMap[c.fee_type];
+          } else {
+            c.selected = needFormE;
+          }
         } else if (oldSelectedMap[c.fee_type] === true) {
           c.selected = true;  // 其他附加服务保留旧勾选
         }
