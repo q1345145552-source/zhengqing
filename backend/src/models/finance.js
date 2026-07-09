@@ -260,8 +260,14 @@ const Finance = {
       }
     }
 
-    const total = charges.reduce((s, c) => s + (c.selected ? c.amount : 0), 0);
-    return { charges, total: Math.round(total * 100) / 100, domestic_freight: 0, storage_fee: storageAmount };
+    // 包含海关关税
+    let customsDuty = 0;
+    if (submissionId) {
+      const { rows: [sd] } = await query('SELECT COALESCE(customs_duty_amount, 0) AS cda FROM submissions WHERE id = $1', [submissionId]);
+      customsDuty = parseFloat(sd?.cda || 0);
+    }
+    const total = charges.reduce((s, c) => s + (c.selected ? c.amount : 0), 0) + customsDuty;
+    return { charges, total: Math.round(total * 100) / 100, domestic_freight: 0, storage_fee: storageAmount, customs_duty_amount: customsDuty };
   },
 
   async getSubmissionCharges(submissionId) {
