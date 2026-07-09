@@ -79,6 +79,10 @@ async function generateInvoice(submissionId, lang = 'zh') {
     }
     return c.fee_name;
   }
+  // Sarabun 字体不支持全角冒号，泰文下替换为半角
+  function tStr(str) {
+    return lang === 'th' ? String(str).replace(/：/g, ':') : String(str);
+  }
   if (!data) throw new Error('订单不存在');
 
   return new Promise((resolve, reject) => {
@@ -110,11 +114,11 @@ async function generateInvoice(submissionId, lang = 'zh') {
     const companyName = data.step2?.company_name || data.client_name || '-';
     
     const leftX = 40;
-    doc.text(`${t.orderNo}：${data.application_no || '#' + data.id}`, leftX);
-    doc.text(`${t.date}：${fmtDate(new Date())}`, leftX + 260);
-    doc.text(`${t.client}：${data.client_name || '-'}`, leftX);
-    doc.text(`${t.route}：${routeName}`, leftX + 260);
-    doc.text(`${t.company}：${companyName}`, leftX);
+    doc.text(`${tStr(t.orderNo)} ${data.application_no || '#' + data.id}`, leftX);
+    doc.text(`${tStr(t.date)} ${fmtDate(new Date())}`, leftX + 260);
+    doc.text(`${tStr(t.client)} ${data.client_name || '-'}`, leftX);
+    doc.text(`${tStr(t.route)} ${routeName}`, leftX + 260);
+    doc.text(`${tStr(t.company)} ${companyName}`, leftX);
     doc.moveDown(0.8);
 
     // === Cost Breakdown Table ===
@@ -169,7 +173,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
 
     // Total
     doc.fontSize(14).fillColor('#E6A23C');
-    doc.text(`${t.total}：${finance.total_amount.toLocaleString()} ${t.currency}`, { align: 'right' });
+    doc.text(`${tStr(t.total)} ${finance.total_amount.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
     doc.moveDown(0.8);
 
@@ -178,8 +182,8 @@ async function generateInvoice(submissionId, lang = 'zh') {
       doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#ddd');
       doc.moveDown(0.5);
       doc.fontSize(11).fillColor('#333');
-      doc.text(`${t.chargeTime}：${fmtDate(new Date(finance.charge_log.charged_at))}`, leftX);
-      doc.text(`${t.chargeAmount}：${parseFloat(finance.charge_log.total_amount).toLocaleString()} ${t.currency}`, leftX);
+      doc.text(`${tStr(t.chargeTime)} ${fmtDate(new Date(finance.charge_log.charged_at))}`, leftX);
+      doc.text(`${tStr(t.chargeAmount)} ${parseFloat(finance.charge_log.total_amount).toLocaleString()} ${t.currency}`, leftX);
     }
 
     // Bank info
@@ -187,7 +191,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke('#ddd');
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#333');
-    doc.text(`${t.bankInfo}：`, leftX);
+    doc.text(`${tStr(t.bankInfo)}`, leftX);
     doc.text(t.bankName, leftX + 15);
     doc.text(t.accountNo, leftX + 15);
 
