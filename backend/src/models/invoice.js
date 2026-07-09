@@ -35,7 +35,7 @@ const translations = {
     remark: '备注',
     remarkText: '本发票为电子发票，与纸质发票具有同等法律效力',
     currency: '泰铢',
-    customsDuty: '海关关税（代垫）',
+    customsDuty: '海关关税',
     routes: { nanning_bangkok: '南宁 → 曼谷', guangzhou_bangkok: '广州深圳 → 曼谷', yiwu_bangkok: '义乌 → 曼谷' },
   },
   th: {
@@ -65,7 +65,7 @@ const translations = {
     remark: 'หมายเหตุ',
     remarkText: 'ใบแจ้งหนี้นี้เป็นใบแจ้งหนี้อิเล็กทรอนิกส์ มีผลทางกฎหมายเทียบเท่าใบแจ้งหนี้กระดาษ',
     currency: 'บาท',
-    customsDuty: 'ค่าภาษีศุลกากร (เจ้าหน้าที่เป็นผู้ชำระ)',
+    customsDuty: 'ค่าภาษีศุลกากร',
     routes: { nanning_bangkok: 'หนานหนิง ไปยัง กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น ไปยัง กรุงเทพ', yiwu_bangkok: 'อี้อู ไปยัง กรุงเทพ' },
     feeNames: {
       freight_cbm: 'ค่าขนส่งระหว่างประเทศ (ตามปริมาตร)',

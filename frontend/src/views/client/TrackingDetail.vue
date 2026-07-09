@@ -249,15 +249,17 @@
           </el-table>
         </template>
 
-        <!-- 海关关税（代垫费用） -->
+        <!-- 海关关税 -->
         <div v-if="data.customs_duty_amount !== undefined" style="margin-top:14px;padding:12px 16px;background:#fdf6ec;border:1px solid #faecd8;border-radius:6px">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <span><strong>海关关税</strong> <el-tag type="info" size="small" style="margin-left:6px">代垫费用</el-tag></span>
+            <span><strong>海关关税</strong></span>
             <span style="font-weight:700;color:#E6A23C;font-size:16px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
           </div>
         </div>
 
-        <div class="total-bar">费用总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
+                <div class="total-bar" style="margin-top:12px">费用合计（不含税） <span>{{ (data.finance?.subtotal_amount || 0).toLocaleString() }} ฿</span></div>
+        <div class="total-bar" style="color:#606266;font-size:14px">增值税 VAT 7% <span>{{ Math.round((data.finance?.subtotal_amount || 0) * 0.07).toLocaleString() }} ฿</span></div>
+        <div class="total-bar" style="color:#E6A23C;font-weight:700;font-size:16px">含税总计 <span>{{ (data.finance?.total_amount || 0).toLocaleString() }} ฿</span></div>
 
         <!-- 扣款记录 -->
         <el-divider style="margin:20px 0" />

@@ -195,16 +195,24 @@
         </el-table>
         <div v-else class="empty-hint">无附加服务</div>
 
-        <!-- 海关关税（代垫费用） -->
+        <!-- 海关关税 -->
         <div v-if="(data.customs_duty_amount || 0) > 0" class="customs-duty-bar">
-          <span>海关关税（代垫费用）</span>
+          <span>海关关税</span>
           <span style="font-weight:700;color:#E6A23C;font-size:15px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
         </div>
 
         <!-- 总计和扣款 -->
         <div class="total-bar">
-          <span>总费用</span>
-          <span class="total-amount">{{ ((data.finance?.total_amount || 0)).toLocaleString() }} ฿</span>
+          <span>费用合计（不含税）</span>
+          <span class="total-amount">{{ ((data.finance?.subtotal_amount || 0)).toLocaleString() }} ฿</span>
+        </div>
+        <div class="total-bar" style="color:#606266">
+          <span>增值税 VAT 7%</span>
+          <span class="total-amount" style="font-size:14px">{{ Math.round((data.finance?.subtotal_amount || 0) * 0.07).toLocaleString() }} ฿</span>
+        </div>
+        <div class="total-bar">
+          <span>含税总计</span>
+          <span class="total-amount" style="color:#E6A23C;font-weight:700;font-size:16px">{{ ((data.finance?.total_amount || 0)).toLocaleString() }} ฿</span>
         </div>
         <div v-if="data.finance?.charge_log">
           <el-alert v-if="data.finance.charge_log.status === 'charged'" type="success" :closable="false" show-icon title="已扣款" :description="'扣款金额: ' + (data.finance.charge_log.total_amount || 0) + ' ฿，时间: ' + fmt(data.finance.charge_log.charged_at)" style="margin-top:8px" />

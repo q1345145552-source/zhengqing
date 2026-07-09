@@ -244,7 +244,8 @@ const EmployeeReview = {
     const storageCharge = charges.rows.find(c => c.fee_type === 'storage');
     const serviceCharges = charges.rows.filter(c => c.is_optional);
     const customsDuty = parseFloat(s.customs_duty_amount) || 0;
-    const totalAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0) + customsDuty;
+    const subtotalAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0) + customsDuty;
+    const grandTotalAmount = Math.round(subtotalAmount * 1.07);
 
     return {
       // 基本信息
@@ -291,7 +292,8 @@ const EmployeeReview = {
         storage: storageCharge || null,
         storage_days: s.storage_days || 0,
         services: serviceCharges,
-        total_amount: Math.round(totalAmount * 100) / 100,
+        subtotal_amount: Math.round(subtotalAmount * 100) / 100,
+        total_amount: Math.round(grandTotalAmount * 100) / 100,
         charge_log: chargeLog.rows[0] || null,
         charge_balance_before: walletTx.rows[0] ? parseFloat(walletTx.rows[0].amount) + parseFloat(walletTx.rows[0].balance_after) : null,
         charge_balance_after: walletTx.rows[0] ? parseFloat(walletTx.rows[0].balance_after) : null,

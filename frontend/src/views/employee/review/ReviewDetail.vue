@@ -313,9 +313,9 @@
             <div style="text-align:right;margin-top:8px;font-size:15px;font-weight:600;color:#E6A23C">附加服务合计: ฿{{ serviceTotal }}</div>
           </div>
 
-          <!-- 代垫费用：海关关税 -->
+          <!-- 海关关税 -->
           <div style="margin-top:20px">
-            <h4>代垫费用 <el-tag type="info" size="small" style="margin-left:6px">实报实销</el-tag></h4>
+            <h4>海关关税</h4>
             <el-form :model="customsDutyForm" inline>
               <el-form-item label="海关关税 (฿)">
                 <el-input-number v-model="customsDutyForm.amount" :min="0" :step="100" :precision="2" size="small" style="width:180px" placeholder="根据Next账单填写" />
@@ -324,7 +324,7 @@
                 <el-button type="primary" size="small" :loading="customsDutySaving" @click="saveCustomsDuty">保存关税</el-button>
               </el-form-item>
             </el-form>
-            <div v-if="customsDutyForm.amount > 0" style="text-align:right;font-size:13px;color:#E6A23C">代垫费用: ฿{{ customsDutyForm.amount }}</div>
+            <div v-if="customsDutyForm.amount > 0" style="text-align:right;font-size:13px;color:#E6A23C">海关关税: ฿{{ customsDutyForm.amount }}</div>
           </div>
 
           <!-- 费用汇总 -->
@@ -346,13 +346,21 @@
               </div>
               <el-divider style="margin:8px 0" />
               <div v-if="customsDutyForm.amount > 0" class="summary-row" style="color:#E6A23C">
-                <span>海关关税（代垫）</span>
+                <span>海关关税</span>
                 <span>{{ customsDutyForm.amount.toLocaleString() }} ฿</span>
               </div>
-              <el-divider v-if="customsDutyForm.amount > 0" style="margin:8px 0" />
+              <el-divider style="margin:8px 0" />
               <div class="summary-row summary-row-total">
-                <span>总计</span>
+                <span>费用合计（不含税）</span>
                 <span>{{ (parseFloat(totalAmount) + (customsDutyForm.amount || 0)).toLocaleString() }} ฿</span>
+              </div>
+              <div class="summary-row" style="color:#606266">
+                <span>增值税 VAT 7%</span>
+                <span>{{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 0.07).toLocaleString() }} ฿</span>
+              </div>
+              <div class="summary-row" style="color:#E6A23C;font-size:16px;font-weight:700">
+                <span>含税总计</span>
+                <span>{{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 1.07).toLocaleString() }} ฿</span>
               </div>
             </div>
             <div style="margin-top:16px;display:flex;align-items:center;gap:16px">
@@ -383,7 +391,7 @@
             <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
             <div class="pay-text">
               <div class="pay-title">待扣款</div>
-              <div class="pay-amount">应收 {{ parseFloat(totalAmount).toLocaleString() }} ฿</div>
+              <div class="pay-amount">应收 {{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 1.07).toLocaleString() }} ฿</div>
               <div class="pay-time">推进到「已到泰国仓库」时自动扣款</div>
             </div>
           </div>

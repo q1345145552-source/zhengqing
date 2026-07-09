@@ -266,8 +266,9 @@ const Finance = {
       const { rows: [sd] } = await query('SELECT COALESCE(customs_duty_amount, 0) AS cda FROM submissions WHERE id = $1', [submissionId]);
       customsDuty = parseFloat(sd?.cda || 0);
     }
-    const total = charges.reduce((s, c) => s + (c.selected ? c.amount : 0), 0) + customsDuty;
-    return { charges, total: Math.round(total * 100) / 100, domestic_freight: 0, storage_fee: storageAmount, customs_duty_amount: customsDuty };
+    const subtotal = charges.reduce((s, c) => s + (c.selected ? c.amount : 0), 0) + customsDuty;
+    const total = Math.round(subtotal * 1.07);
+    return { charges, subtotal: Math.round(subtotal * 100) / 100, total: Math.round(total * 100) / 100, domestic_freight: 0, storage_fee: storageAmount, customs_duty_amount: customsDuty };
   },
 
   async getSubmissionCharges(submissionId) {
@@ -275,8 +276,9 @@ const Finance = {
     const { rows: [log] } = await query('SELECT * FROM submission_charge_logs WHERE submission_id = $1 ORDER BY id DESC LIMIT 1', [submissionId]);
     const { rows: [sub] } = await query('SELECT COALESCE(customs_duty_amount, 0) AS customs_duty_amount FROM submissions WHERE id = $1', [submissionId]);
     const customsDuty = parseFloat(sub?.customs_duty_amount || 0);
-    const total = rows.filter(c => c.selected).reduce((s, c) => s + parseFloat(c.amount), 0) + customsDuty;
-    return { charges: rows, total: Math.round(total * 100) / 100, charge_log: log || null, customs_duty_amount: customsDuty };
+    const subtotal = rows.filter(c => c.selected).reduce((s, c) => s + parseFloat(c.amount), 0) + customsDuty;
+    const total = Math.round(subtotal * 1.07);
+    return { charges: rows, subtotal: Math.round(subtotal * 100) / 100, total: Math.round(total * 100) / 100, charge_log: log || null, customs_duty_amount: customsDuty };
   },
 
   async updateCharges(submissionId, charges) {
