@@ -1,6 +1,11 @@
 const PDFDocument = require('pdfkit');
+const path = require('path');
 const { query } = require('../db');
 const EmployeeReview = require('./employeeReview');
+
+// 字体文件路径
+const FONT_SC = path.join(__dirname, '../../fonts/NotoSansSC-Regular.ttf');
+const FONT_TH = path.join(__dirname, '../../fonts/NotoSansThai-Regular.ttf');
 
 const translations = {
   zh: {
@@ -49,18 +54,22 @@ const translations = {
 
 async function generateInvoice(submissionId, lang = 'zh') {
   const t = translations[lang] || translations.zh;
+  const fontFile = lang === 'th' ? FONT_TH : FONT_SC;
   const data = await EmployeeReview.exportData(submissionId);
   if (!data) throw new Error('订单不存在');
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    // 注册嵌入字体
+    doc.registerFont('CJK', fontFile);
+    const font = 'CJK';
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
     const pageW = doc.page.width - 80;
-    const font = 'Helvetica';
+    // font is registered above
 
     // === Header ===
     doc.fontSize(26).font(font).text(t.title, { align: 'center' });
