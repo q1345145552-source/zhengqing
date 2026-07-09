@@ -51,7 +51,7 @@ const translations = {
     remark: 'หมายเหตุ',
     remarkText: 'ใบแจ้งหนี้นี้เป็นใบแจ้งหนี้อิเล็กทรอนิกส์ มีผลทางกฎหมายเทียบเท่าใบแจ้งหนี้กระดาษ',
     currency: 'บาท',
-    routes: { nanning_bangkok: 'หนานหนิง → กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น → กรุงเทพ', yiwu_bangkok: 'อี้อู → กรุงเทพ' },
+    routes: { nanning_bangkok: 'หนานหนิง ไปยัง กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น ไปยัง กรุงเทพ', yiwu_bangkok: 'อี้อู ไปยัง กรุงเทพ' },
     feeNames: {
       freight_cbm: 'ค่าขนส่งระหว่างประเทศ (ตามปริมาตร)',
       freight_kg: 'ค่าขนส่งระหว่างประเทศ (ตามน้ำหนัก)',
