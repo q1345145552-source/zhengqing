@@ -540,7 +540,7 @@ router.get('/client/charge-history', auth, role('client'), async (req, res) => {
 });
 
 // 发票下载
-router.get('/client/orders/:id/invoice', async (req, res) => {
+router.get('/client/orders/:id/invoice', auth, async (req, res) => {
   try {
     const { generateInvoice } = require('../models/invoice');
     const { query } = require('../db');
