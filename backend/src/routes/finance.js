@@ -539,5 +539,27 @@ router.get('/client/charge-history', auth, role('client'), async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ code: 500, message: '服务器内部错误' }); }
 });
 
+// 发票下载
+router.get('/client/orders/:id/invoice', async (req, res) => {
+  try {
+    const { generateInvoice } = require('../models/invoice');
+    const { query } = require('../db');
+    const lang = req.query.lang || 'zh';
+
+    // 校验归属
+    const { rows: [sub] } = await query('SELECT user_id, tracking_status FROM submissions WHERE id = $1', [req.params.id]);
+    if (!sub || sub.user_id !== req.user.id) return res.status(403).json({ code: 403, message: '无权访问' });
+    if (sub.tracking_status !== 9) return res.status(400).json({ code: 400, message: '仅已完成订单可下载发票' });
+
+    const pdfBuffer = await generateInvoice(req.params.id, lang);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice_${req.params.id}_${lang}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Invoice generation error:', err);
+    res.status(500).json({ code: 500, message: '发票生成失败' });
+  }
+});
+
 module.exports = router;
 

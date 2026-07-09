@@ -166,6 +166,19 @@
         </div>
       </el-card>
 
+      <!-- 发票下载 -->
+      <el-card v-if="data.tracking_status === 9" shadow="never">
+        <template #header><div class="block-title"><el-icon><Document /></el-icon> 发票下载</div></template>
+        <div style="display:flex;gap:12px">
+          <el-button type="primary" @click="downloadInvoice('zh')">
+            <el-icon><Download /></el-icon> 中文发票
+          </el-button>
+          <el-button type="success" @click="downloadInvoice('th')">
+            <el-icon><Download /></el-icon> ใบแจ้งหนี้ภาษาไทย
+          </el-button>
+        </div>
+      </el-card>
+
       <!-- 海关文件 -->
       <el-card v-if="customsDocs.length > 0" shadow="never">
         <template #header><div class="block-title"><el-icon><FolderOpened /></el-icon> 海关回传文件</div></template>
@@ -194,7 +207,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import request from '@/api/request'
-import { CircleCheckFilled, Clock } from '@element-plus/icons-vue'
+import { CircleCheckFilled, Clock, Download, Document } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const loading = ref(false)
@@ -251,6 +264,24 @@ function fileUrl(obj) {
     p = idx >= 0 ? sp.substring(idx) : ''
   }
   return p
+}
+async function downloadInvoice(lang) {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await fetch(`/api/finance/client/orders/${data.id}/invoice?lang=${lang}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!response.ok) throw new Error('下载失败')
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `invoice_${data.application_no || data.id}_${lang}.pdf`
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    ElMessage.error('发票下载失败')
+  }
 }
 function fmt(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
 </script>
