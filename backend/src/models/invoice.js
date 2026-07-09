@@ -5,7 +5,7 @@ const EmployeeReview = require('./employeeReview');
 
 // 字体文件路径（系统安装的 Noto 字体）
 const FONT_SC = path.join(__dirname, '../../fonts/NotoSansSC-Regular.ttf');
-const FONT_TH = '/usr/share/fonts/noto/NotoSansThaiLooped-Regular.ttf';
+const FONT_TH = path.join(__dirname, '../../fonts/Sarabun-Regular.ttf');
 
 const translations = {
   zh: {
