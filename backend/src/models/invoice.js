@@ -144,7 +144,11 @@ async function generateInvoice(submissionId, lang = 'zh') {
       const y = doc.y;
       if (isBold) doc.font(font);
       else doc.font(font);
-      doc.text(label, col1X, y);
+      // 中文模式下替换 ฿ 为泰铢，泰文模式下替换全角冒号
+      let safeLabel = label;
+      if (lang === 'zh') safeLabel = String(label).replace(/฿/g, '泰铢');
+      else if (lang === 'th') safeLabel = String(label).replace(/：/g, ':');
+      doc.text(safeLabel, col1X, y);
       doc.text(`${(amt || 0).toLocaleString()} ${t.currency}`, col2X, y, { align: 'right', width: 100 });
       doc.moveDown(0.15);
     }
@@ -192,8 +196,8 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#333');
     doc.text(`${tStr(t.bankInfo)}`, leftX);
-    doc.text(t.bankName, leftX + 15);
-    doc.text(t.accountNo, leftX + 15);
+    doc.text(tStr(t.bankName), leftX + 15);
+    doc.text(tStr(t.accountNo), leftX + 15);
 
     // Remark
     doc.moveDown(1);
