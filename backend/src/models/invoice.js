@@ -27,6 +27,8 @@ const translations = {
     accountNo: '账号：6217 0000 0000 0000 000',
     remark: '备注',
     remarkText: '本发票为电子发票，与纸质发票具有同等法律效力',
+    currency: '泰铢',
+    customsDuty: '海关关税（代垫）',
     routes: { nanning_bangkok: '南宁 → 曼谷', guangzhou_bangkok: '广州深圳 → 曼谷', yiwu_bangkok: '义乌 → 曼谷' },
   },
   th: {
@@ -48,7 +50,20 @@ const translations = {
     accountNo: 'เลขที่บัญชี：6217 0000 0000 0000 000',
     remark: 'หมายเหตุ',
     remarkText: 'ใบแจ้งหนี้นี้เป็นใบแจ้งหนี้อิเล็กทรอนิกส์ มีผลทางกฎหมายเทียบเท่าใบแจ้งหนี้กระดาษ',
+    currency: 'บาท',
     routes: { nanning_bangkok: 'หนานหนิง → กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น → กรุงเทพ', yiwu_bangkok: 'อี้อู → กรุงเทพ' },
+    feeNames: {
+      freight_cbm: 'ค่าขนส่งระหว่างประเทศ (ตามปริมาตร)',
+      freight_kg: 'ค่าขนส่งระหว่างประเทศ (ตามน้ำหนัก)',
+      domestic_freight: 'ค่าขนส่งภายในประเทศ',
+      thai_customs: 'ค่าบริการพิธีการศุลกากร',
+      china_customs: 'ค่าธรรมเนียมศุลกากรจีน',
+      form_e: 'ค่าธรรมเนียม Form E',
+      pallet: 'ค่าธรรมเนียมพาเลท',
+      wooden_box: 'ค่าธรรมเนียมบรรจุภัณฑ์ไม้',
+      storage: 'ค่าจัดเก็บสินค้า',
+    },
+    customsDuty: 'ค่าภาษีศุลกากร (เจ้าหน้าที่เป็นผู้ชำระ)',
   },
 };
 
@@ -56,6 +71,14 @@ async function generateInvoice(submissionId, lang = 'zh') {
   const t = translations[lang] || translations.zh;
   const fontFile = lang === 'th' ? FONT_TH : FONT_SC;
   const data = await EmployeeReview.exportData(submissionId);
+
+  // 泰文发票翻译费用名称
+  function feeLabel(c) {
+    if (lang === 'th' && t.feeNames && c.fee_type) {
+      return t.feeNames[c.fee_type] || c.fee_name;
+    }
+    return c.fee_name;
+  }
   if (!data) throw new Error('订单不存在');
 
   return new Promise((resolve, reject) => {
@@ -118,26 +141,26 @@ async function generateInvoice(submissionId, lang = 'zh') {
       if (isBold) doc.font(font);
       else doc.font(font);
       doc.text(label, col1X, y);
-      doc.text(`${(amt || 0).toLocaleString()} ฿`, col2X, y, { align: 'right', width: 100 });
+      doc.text(`${(amt || 0).toLocaleString()} ${t.currency}`, col2X, y, { align: 'right', width: 100 });
       doc.moveDown(0.15);
     }
 
     // Freight
     if (finance.freight_cbm?.selected && finance.freight_cbm.amount > 0) {
-      addRow(finance.freight_cbm.fee_name || t.item, finance.freight_cbm.amount);
+      addRow(feeLabel(finance.freight_cbm) || t.item, finance.freight_cbm.amount);
     }
     if (finance.freight_kg?.selected && finance.freight_kg.amount > 0) {
-      addRow(finance.freight_kg.fee_name || t.item, finance.freight_kg.amount);
+      addRow(feeLabel(finance.freight_kg) || t.item, finance.freight_kg.amount);
     }
 
     // Services
     (finance.services || []).filter(s => s.selected && s.amount > 0).forEach(s => {
-      addRow(s.fee_name, s.amount);
+      addRow(feeLabel(s), s.amount);
     });
 
     // Customs duty
     if ((data.customs_duty_amount || 0) > 0) {
-      addRow(lang === 'zh' ? '海关关税（代垫）' : 'ภาษีศุลกากร', data.customs_duty_amount);
+      addRow(t.customsDuty, data.customs_duty_amount);
     }
 
     doc.moveDown(0.3);
@@ -146,7 +169,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
 
     // Total
     doc.fontSize(14).fillColor('#E6A23C');
-    doc.text(`${t.total}：${finance.total_amount.toLocaleString()} ฿`, { align: 'right' });
+    doc.text(`${t.total}：${finance.total_amount.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
     doc.moveDown(0.8);
 
@@ -156,7 +179,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
       doc.moveDown(0.5);
       doc.fontSize(11).fillColor('#333');
       doc.text(`${t.chargeTime}：${fmtDate(new Date(finance.charge_log.charged_at))}`, leftX);
-      doc.text(`${t.chargeAmount}：${parseFloat(finance.charge_log.total_amount).toLocaleString()} ฿`, leftX);
+      doc.text(`${t.chargeAmount}：${parseFloat(finance.charge_log.total_amount).toLocaleString()} ${t.currency}`, leftX);
     }
 
     // Bank info
