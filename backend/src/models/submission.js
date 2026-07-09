@@ -117,19 +117,20 @@ const Submission = {
   async saveStep2(submissionId, data) {
     const result = await query(
       `INSERT INTO submission_company_docs (
-         submission_id, dbd_file, pp20_file, company_stamp_file,
+         submission_id, company_name, dbd_file, pp20_file, company_stamp_file,
          director_passport_file, thai_address, tax_id
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (submission_id) DO UPDATE SET
-         dbd_file = COALESCE($2, submission_company_docs.dbd_file),
-         pp20_file = COALESCE($3, submission_company_docs.pp20_file),
-         company_stamp_file = COALESCE($4, submission_company_docs.company_stamp_file),
-         director_passport_file = COALESCE($5, submission_company_docs.director_passport_file),
-         thai_address = COALESCE($6, submission_company_docs.thai_address),
-         tax_id = COALESCE($7, submission_company_docs.tax_id),
+         company_name = COALESCE($2, submission_company_docs.company_name),
+         dbd_file = COALESCE($3, submission_company_docs.dbd_file),
+         pp20_file = COALESCE($4, submission_company_docs.pp20_file),
+         company_stamp_file = COALESCE($5, submission_company_docs.company_stamp_file),
+         director_passport_file = COALESCE($6, submission_company_docs.director_passport_file),
+         thai_address = COALESCE($7, submission_company_docs.thai_address),
+         tax_id = COALESCE($8, submission_company_docs.tax_id),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [submissionId, data.dbd_file || null, data.pp20_file || null, data.company_stamp_file || null, data.director_passport_file || null, data.thai_address || null, data.tax_id || null]
+      [submissionId, data.company_name || null, data.dbd_file || null, data.pp20_file || null, data.company_stamp_file || null, data.director_passport_file || null, data.thai_address || null, data.tax_id || null]
     );
     return result.rows[0];
   },

@@ -128,6 +128,15 @@
         </div>
       </el-form-item>
 
+      <!-- 公司名称 -->
+      <el-form-item label="公司名称" required>
+        <el-input
+          v-model="form.company_name"
+          placeholder="请填写泰国公司注册名称"
+          maxlength="200"
+        />
+      </el-form-item>
+
       <!-- 公司税号 -->
       <el-form-item label="公司税号 (TAX ID)">
         <el-input
@@ -176,6 +185,7 @@ const selectedDocId = ref(null)
 const inputRefs = { dbd: dbdInput, pp20: pp20Input, stamp: stampInput, passport: passportInput }
 
 const form = reactive({
+  company_name: props.formData?.company_name || '',
   dbd_file: props.formData?.dbd_file || null,
   pp20_file: props.formData?.pp20_file || null,
   company_stamp_file: props.formData?.company_stamp_file || null,
@@ -192,7 +202,7 @@ onMounted(async () => {
     const res = await getCompanyDocs()
     savedDocs.value = res.data || []
     // 如果当前步骤已有保存的数据（从 formData 恢复），不要用公司资料库覆盖
-    const hasStepData = form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address || form.tax_id
+    const hasStepData = form.company_name || form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address || form.tax_id
     if (savedDocs.value.length > 0 && !hasStepData) {
       selectedDocId.value = savedDocs.value[0].id
       fillFromDoc(savedDocs.value[0])
@@ -208,6 +218,7 @@ watch(() => props.formData, (newVal) => {
   if (newVal.company_stamp_file !== undefined) form.company_stamp_file = newVal.company_stamp_file
   if (newVal.director_passport_file !== undefined) form.director_passport_file = newVal.director_passport_file
   if (newVal.thai_address !== undefined) form.thai_address = newVal.thai_address || ''
+  if (newVal.company_name !== undefined) form.company_name = newVal.company_name || ''
   if (newVal.tax_id !== undefined) form.tax_id = newVal.tax_id || ''
 }, { deep: true, immediate: false })
 
@@ -216,7 +227,7 @@ function onSelectDoc(id) {
     // 重新上传
     Object.assign(form, {
       dbd_file: null, pp20_file: null, company_stamp_file: null,
-      director_passport_file: null, thai_address: '', tax_id: '',
+      director_passport_file: null, thai_address: '', tax_id: '', company_name: '',
     })
     emit('update', { ...form })
     return
@@ -227,6 +238,7 @@ function onSelectDoc(id) {
 
 function fillFromDoc(doc) {
   Object.assign(form, {
+    company_name: doc.company_name || '',
     dbd_file: isFileObj(doc.dbd_file) ? doc.dbd_file : null,
     pp20_file: isFileObj(doc.pp20_file) ? doc.pp20_file : null,
     company_stamp_file: isFileObj(doc.company_stamp_file) ? doc.company_stamp_file : null,
