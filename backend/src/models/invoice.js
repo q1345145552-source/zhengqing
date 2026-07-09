@@ -101,8 +101,13 @@ async function generateInvoice(submissionId, lang = 'zh') {
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
-    // 注册嵌入字体
+    // 注册字体：中文用 SC，泰文用 Sarabun；泰文发票两个都注册以防地址含中文
     doc.registerFont('CJK', fontFile);
+    if (lang === 'zh') {
+      doc.registerFont('TH', FONT_TH);  // 中文发票也需要泰文字体显示地址
+    } else {
+      doc.registerFont('TH', FONT_SC);  // 泰文发票备中文回退（实际不使用）
+    }
     const font = 'CJK';
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
@@ -135,7 +140,16 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.text(`${tStr(t.route)} ${routeName}`, leftX + 260);
     doc.text(`${tStr(t.company)} ${companyName}`, leftX);
     if (companyTaxId) doc.text(`${tStr(t.taxId)} ${companyTaxId}`, leftX);
-    if (companyAddress) doc.text(`${tStr(t.address)} ${companyAddress}`, leftX);
+    if (companyAddress) {
+      const hasThai = /[\u0E00-\u0E7F]/.test(companyAddress);
+      if (lang === 'zh' && hasThai) {
+        doc.font(font).text(`${tStr(t.address)}：`, leftX);
+        doc.font('TH').text(companyAddress, leftX + 15);
+        doc.font(font);
+      } else {
+        doc.text(`${tStr(t.address)} ${companyAddress}`, leftX);
+      }
+    }
     doc.moveDown(0.3);
 
     // === Billing Party (Double H Cargo) ===
@@ -204,7 +218,7 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.moveDown(0.3);
 
     // === Subtotal ===
-    const subtotal = finance.total_amount || 0;
+    const subtotal = finance.subtotal_amount || 0;
     doc.fontSize(14).fillColor('#E6A23C');
     doc.text(`${tStr(t.subtotal)} ${subtotal.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
