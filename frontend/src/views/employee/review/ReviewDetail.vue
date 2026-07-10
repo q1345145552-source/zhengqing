@@ -754,8 +754,8 @@ async function loadDetail() {
     customsDutyForm.amount = parseFloat(data.customs_duty_amount) || 0
     // 回填客户预报单数据（优先step5，回退到submissions表字段）
     freightParams.route = data.step5?.route || data.international_route || ''
-    freightParams.volume = data.step5?.volume ?? (data.volume || 0)
-    freightParams.weight = data.step5?.weight ?? (data.weight || 0)
+    freightParams.volume = data.step5?.volume ?? 0
+    freightParams.weight = data.step5?.weight ?? 0
     freightParams.domestic_logistics = data.step5?.domestic_logistics || data.domestic_logistics || ''
     if (data.step5?.need_form_e !== undefined) freightParams.need_form_e = data.step5.need_form_e
     if (data.step5?.pallet_count !== undefined) freightParams.pallet_count = data.step5.pallet_count

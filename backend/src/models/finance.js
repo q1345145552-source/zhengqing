@@ -243,6 +243,8 @@ const Finance = {
         if (c.selected && c.is_optional) newSelected.push(c.fee_type);
       }
       if (logistics) await query('UPDATE submissions SET domestic_logistics = $1 WHERE id = $2', [logistics, submissionId]);
+      // 保存体积重量到 submission_shipments（员工费用Tab修改）
+      await query(`INSERT INTO submission_shipments (submission_id, volume, weight) VALUES ($1, $2, $3) ON CONFLICT (submission_id) DO UPDATE SET volume = COALESCE($2, submission_shipments.volume), weight = COALESCE($3, submission_shipments.weight)`, [submissionId, volume || null, weight || null]);
       if (route) await query('UPDATE submissions SET international_route = $1 WHERE id = $2', [route, submissionId]);
       if (entryDate) {
         const e = new Date(entryDate); const n = new Date();
