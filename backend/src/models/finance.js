@@ -226,9 +226,8 @@ const Finance = {
           c.selected = true;  // 退税时必选
         } else if (c.fee_type === 'form_e') {
           c.selected = needFormE;  // 始终依客户预报单选择
-        } else if (oldSelectedMap[c.fee_type] === true) {
-          c.selected = true;  // 其他附加服务保留旧勾选
-        }
+        } else if (c.fee_type !== 'freight_cbm' && c.fee_type !== 'freight_kg' && c.fee_type !== 'freight_max_note' && oldSelectedMap[c.fee_type] === true) {
+          c.selected = true;  // 附加服务保留旧勾选（运费不恢复，始终按择大逻辑）
         chargesToSave.push(c);
       }
 
