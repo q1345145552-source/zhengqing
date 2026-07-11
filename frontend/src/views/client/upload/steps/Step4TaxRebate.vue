@@ -74,10 +74,13 @@
           <el-button type="primary" plain @click="$refs.invoiceInput.click()" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传 Invoice
           </el-button>
-          <span v-if="form.invoice_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.invoice_file.original_name || '已上传' }}
-          </span>
+          <div v-if="form.invoice_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.invoice_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('invoice_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="invoiceInput"
             type="file"
@@ -93,10 +96,13 @@
           <el-button type="primary" plain @click="$refs.plInput.click()" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传 Packing List
           </el-button>
-          <span v-if="form.packing_list_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.packing_list_file.original_name || '已上传' }}
-          </span>
+          <div v-if="form.packing_list_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.packing_list_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('packing_list_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="plInput"
             type="file"
@@ -124,12 +130,18 @@ const emit = defineEmits(['update'])
 const formRef = ref(null)
 const uploading = ref(false)
 
+function normalizeFiles(val) {
+  if (!val) return []
+  if (Array.isArray(val)) return [...val]
+  if (typeof val === 'object' && val.url) return [val]
+  return []
+}
 const form = reactive({
   need_rebate: props.formData?.need_rebate ?? null,
   customs_company_name: props.formData?.customs_company_name || '',
   logistics_contact: props.formData?.logistics_contact || '',
-  invoice_file: props.formData?.invoice_file || null,
-  packing_list_file: props.formData?.packing_list_file || null,
+  invoice_file: normalizeFiles(props.formData?.invoice_files || props.formData?.invoice_file),
+  packing_list_file: normalizeFiles(props.formData?.packing_list_files || props.formData?.packing_list_file),
 })
 
 // 监听 formData 变化，切换回来时恢复数据
@@ -138,8 +150,8 @@ watch(() => props.formData, (newVal) => {
   if (newVal.need_rebate !== undefined) form.need_rebate = newVal.need_rebate
   if (newVal.customs_company_name !== undefined) form.customs_company_name = newVal.customs_company_name || ''
   if (newVal.logistics_contact !== undefined) form.logistics_contact = newVal.logistics_contact || ''
-  if (newVal.invoice_file !== undefined) form.invoice_file = newVal.invoice_file
-  if (newVal.packing_list_file !== undefined) form.packing_list_file = newVal.packing_list_file
+  if (newVal.invoice_file !== undefined) form.invoice_file = normalizeFiles(newVal.invoice_file)
+  if (newVal.packing_list_file !== undefined) form.packing_list_file = normalizeFiles(newVal.packing_list_file)
 }, { deep: true, immediate: false })
 
 function emitUpdate() {
@@ -165,14 +177,14 @@ async function handleFileChange(event, field) {
       const file = files[i]
       const res = await uploadFile(props.submissionId, 4, file)
       if (res.code === 200) {
-        form[field] = {
+        form[field].push({
           filename: file.name,
           original_name: res.data.original_name,
           stored_path: res.data.stored_path,
           url: res.data.url,
           mime_type: res.data.mime_type,
           size: res.data.size,
-        }
+        })
         emitUpdate()
       }
     }
@@ -185,11 +197,16 @@ async function handleFileChange(event, field) {
   }
 }
 
+function removeFile(field, idx) {
+  form[field].splice(idx, 1)
+  emitUpdate()
+}
+
 var rules = {
   need_rebate: [{ required: true, message: '请选择退税类型', trigger: 'change', validator: function(rule, value, cb) { if (value === null || value === undefined) cb(new Error('请选择是否需要退税')); else cb(); } }],
   customs_company_name: [{ required: true, message: '请输入报关公司名称', trigger: 'blur' }],
-  invoice_file: [{ required: true, message: '请上传商业发票', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传商业发票')); else cb(); } }],
-  packing_list_file: [{ required: true, message: '请上传装箱单', trigger: 'change', validator: function(rule, value, cb) { if (!value || !value.url) cb(new Error('请上传装箱单')); else cb(); } }],
+  invoice_file: [{ required: true, message: '请上传商业发票', trigger: 'change', validator: function(rule, value, cb) { if (!value || value.length === 0) cb(new Error('请上传商业发票')); else cb(); } }],
+  packing_list_file: [{ required: true, message: '请上传装箱单', trigger: 'change', validator: function(rule, value, cb) { if (!value || value.length === 0) cb(new Error('请上传装箱单')); else cb(); } }],
 };
 
 function getFormData() {
@@ -237,4 +254,7 @@ defineExpose({ getFormData, formRef })
     }
   }
 }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
+.file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

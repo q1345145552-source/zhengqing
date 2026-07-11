@@ -75,10 +75,13 @@
             <el-button size="small" plain @click="$refs.dbdDialogInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传文件
             </el-button>
-            <span v-if="form.dbd_file?.original_name" class="uploaded-name">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.dbd_file.original_name }}
-            </span>
+            <div v-if="form.dbd_file.length > 0" class="file-list">
+              <div v-for="(f, idx) in form.dbd_file" :key="idx" class="file-item">
+                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                <span class="uploaded-name">{{ f.original_name }}</span>
+                <el-button type="danger" size="small" @click="removeFile('dbd_file', idx)" :disabled="uploading">删除</el-button>
+              </div>
+            </div>
             <input ref="dbdDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'dbd_file')" multiple />
           </div>
         </el-form-item>
@@ -88,10 +91,13 @@
             <el-button size="small" plain @click="$refs.pp20DialogInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传文件
             </el-button>
-            <span v-if="form.pp20_file?.original_name" class="uploaded-name">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.pp20_file.original_name }}
-            </span>
+            <div v-if="form.pp20_file.length > 0" class="file-list">
+              <div v-for="(f, idx) in form.pp20_file" :key="idx" class="file-item">
+                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                <span class="uploaded-name">{{ f.original_name }}</span>
+                <el-button type="danger" size="small" @click="removeFile('pp20_file', idx)" :disabled="uploading">删除</el-button>
+              </div>
+            </div>
             <input ref="pp20DialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'pp20_file')" multiple />
           </div>
         </el-form-item>
@@ -101,10 +107,13 @@
             <el-button size="small" plain @click="$refs.stampDialogInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传文件
             </el-button>
-            <span v-if="form.company_stamp_file?.original_name" class="uploaded-name">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.company_stamp_file.original_name }}
-            </span>
+            <div v-if="form.company_stamp_file.length > 0" class="file-list">
+              <div v-for="(f, idx) in form.company_stamp_file" :key="idx" class="file-item">
+                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                <span class="uploaded-name">{{ f.original_name }}</span>
+                <el-button type="danger" size="small" @click="removeFile('company_stamp_file', idx)" :disabled="uploading">删除</el-button>
+              </div>
+            </div>
             <input ref="stampDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'company_stamp_file')" multiple />
           </div>
         </el-form-item>
@@ -114,10 +123,13 @@
             <el-button size="small" plain @click="$refs.passDialogInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传文件
             </el-button>
-            <span v-if="form.director_passport_file?.original_name" class="uploaded-name">
-              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.director_passport_file.original_name }}
-            </span>
+            <div v-if="form.director_passport_file.length > 0" class="file-list">
+              <div v-for="(f, idx) in form.director_passport_file" :key="idx" class="file-item">
+                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                <span class="uploaded-name">{{ f.original_name }}</span>
+                <el-button type="danger" size="small" @click="removeFile('director_passport_file', idx)" :disabled="uploading">删除</el-button>
+              </div>
+            </div>
             <input ref="passDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'director_passport_file')" multiple />
           </div>
         </el-form-item>
@@ -177,13 +189,13 @@ function editDoc(doc) {
   form.company_name = doc.company_name || ''
   form.thai_address = doc.thai_address || ''
   form.tax_id = doc.tax_id || ''
+  form.dbd_file = normalizeFiles(doc.dbd_file)
+  form.pp20_file = normalizeFiles(doc.pp20_file)
+  form.company_stamp_file = normalizeFiles(doc.company_stamp_file)
+  form.director_passport_file = normalizeFiles(doc.director_passport_file)
   form.legal_rep_info = doc.legal_rep_info && typeof doc.legal_rep_info === 'object'
     ? { ...doc.legal_rep_info }
     : { name: '', passport_no: '', phone: '' }
-  form.dbd_file = doc.dbd_file && typeof doc.dbd_file === 'object' && doc.dbd_file.original_name ? doc.dbd_file : null
-  form.pp20_file = doc.pp20_file && typeof doc.pp20_file === 'object' && doc.pp20_file.original_name ? doc.pp20_file : null
-  form.company_stamp_file = doc.company_stamp_file && typeof doc.company_stamp_file === 'object' && doc.company_stamp_file.original_name ? doc.company_stamp_file : null
-  form.director_passport_file = doc.director_passport_file && typeof doc.director_passport_file === 'object' && doc.director_passport_file.original_name ? doc.director_passport_file : null
   showDialog.value = true
 }
 
@@ -196,13 +208,13 @@ async function handleDialogUpload(event, field) {
       const file = files[i]
       const res = await uploadProfileFile(file)
       if (res.code === 200) {
-        form[field] = {
+        form[field].push({
           original_name: res.data.original_name,
           stored_path: res.data.stored_path,
           url: res.data.url,
           mime_type: res.data.mime_type,
           size: res.data.size,
-        }
+        })
       }
     }
     ElMessage.success(`${files.length} 个文件上传成功`)
@@ -212,6 +224,10 @@ async function handleDialogUpload(event, field) {
     uploading.value = false
     event.target.value = ''
   }
+}
+
+function removeFile(field, idx) {
+  form[field].splice(idx, 1)
 }
 
 async function handleSave() {
@@ -225,10 +241,10 @@ async function handleSave() {
       thai_address: form.thai_address,
       tax_id: form.tax_id,
       legal_rep_info: form.legal_rep_info,
-      dbd_file: form.dbd_file,
-      pp20_file: form.pp20_file,
-      company_stamp_file: form.company_stamp_file,
-      director_passport_file: form.director_passport_file,
+      dbd_file: form.dbd_file.length > 0 ? form.dbd_file : null,
+      pp20_file: form.pp20_file.length > 0 ? form.pp20_file : null,
+      company_stamp_file: form.company_stamp_file.length > 0 ? form.company_stamp_file : null,
+      director_passport_file: form.director_passport_file.length > 0 ? form.director_passport_file : null,
     }
 
     if (editingDoc.value) {
@@ -328,4 +344,7 @@ function formatDate(d) {
     font-size: 13px;
   }
 }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
+.file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

@@ -219,21 +219,48 @@ const timeline = ref([])
 const customsDocs = ref([])
 
 const step1Images = computed(() => { const imgs = data.step1?.product_images || []; return Array.isArray(imgs) ? imgs : [] })
+const toFileArray = (field) => {
+  if (!field) return []
+  if (Array.isArray(field)) return field
+  return [field]
+}
+
 const step2Files = computed(() => [
-  { label: 'DBD 文件', fileUrl: fileUrl(data.step2?.dbd_file), fileName: data.step2?.dbd_file?.original_name },
-  { label: 'PP.20 文件', fileUrl: fileUrl(data.step2?.pp20_file), fileName: data.step2?.pp20_file?.original_name },
-  { label: '公司印章', fileUrl: fileUrl(data.step2?.company_stamp_file), fileName: data.step2?.company_stamp_file?.original_name },
-  { label: '法人护照', fileUrl: fileUrl(data.step2?.director_passport_file), fileName: data.step2?.director_passport_file?.original_name },
-])
+  { key: 'dbd_file', label: 'DBD 文件' },
+  { key: 'pp20_file', label: 'PP.20 文件' },
+  { key: 'company_stamp_file', label: '公司印章' },
+  { key: 'director_passport_file', label: '法人护照' },
+].flatMap(f => {
+  const files = toFileArray(data.step2?.[f.key])
+  return files.map((file, i) => ({
+    label: files.length > 1 ? `${f.label} (${i + 1})` : f.label,
+    fileUrl: fileUrl(file),
+    fileName: file?.original_name || file?.name || '-'
+  }))
+}))
 const step3Files = computed(() => [
-  { label: '授权委托书', fileUrl: fileUrl(data.step3?.power_of_attorney_file), fileName: data.step3?.power_of_attorney_file?.original_name },
-  { label: 'PP.20 签字', fileUrl: fileUrl(data.step3?.pp20_signed_file), fileName: data.step3?.pp20_signed_file?.original_name },
-  { label: 'DBD 签字', fileUrl: fileUrl(data.step3?.dbd_signed_file), fileName: data.step3?.dbd_signed_file?.original_name },
-])
+  { key: 'power_of_attorney_file', label: '授权委托书' },
+  { key: 'pp20_signed_file', label: 'PP.20 签字' },
+  { key: 'dbd_signed_file', label: 'DBD 签字' },
+].flatMap(f => {
+  const files = toFileArray(data.step3?.[f.key])
+  return files.map((file, i) => ({
+    label: files.length > 1 ? `${f.label} (${i + 1})` : f.label,
+    fileUrl: fileUrl(file),
+    fileName: file?.original_name || file?.name || '-'
+  }))
+}))
 const step4Files = computed(() => [
-  { label: '商业发票', fileUrl: fileUrl(data.step4?.invoice_file), fileName: data.step4?.invoice_file?.original_name },
-  { label: '装箱单', fileUrl: fileUrl(data.step4?.packing_list_file), fileName: data.step4?.packing_list_file?.original_name },
-])
+  { key: 'invoice_file', label: '商业发票' },
+  { key: 'packing_list_file', label: '装箱单' },
+].flatMap(f => {
+  const files = toFileArray(data.step4?.[f.key])
+  return files.map((file, i) => ({
+    label: files.length > 1 ? `${f.label} (${i + 1})` : f.label,
+    fileUrl: fileUrl(file),
+    fileName: file?.original_name || file?.name || '-'
+  }))
+}))
 const freightRows = computed(() => {
   const rows = []
   const cbm = data.finance?.freight_cbm; const kg = data.finance?.freight_kg

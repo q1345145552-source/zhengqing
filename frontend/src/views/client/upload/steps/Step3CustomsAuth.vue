@@ -77,10 +77,13 @@
             <el-button type="primary" plain @click="$refs.poaInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传授权委托书
             </el-button>
-            <span v-if="form.power_of_attorney_file" class="file-status uploaded">
+                      <div v-if="form.power_of_attorney_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.power_of_attorney_file" :key="idx" class="file-item">
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.power_of_attorney_file.original_name || '已上传' }}
-            </span>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('power_of_attorney_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
             <input
               ref="poaInput"
               type="file"
@@ -97,10 +100,13 @@
             <el-button type="primary" plain @click="$refs.pp20sInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传 PP.20
             </el-button>
-            <span v-if="form.pp20_signed_file" class="file-status uploaded">
+                      <div v-if="form.pp20_signed_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.pp20_signed_file" :key="idx" class="file-item">
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.pp20_signed_file.original_name || '已上传' }}
-            </span>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('pp20_signed_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
             <input
               ref="pp20sInput"
               type="file"
@@ -117,10 +123,13 @@
             <el-button type="primary" plain @click="$refs.dbdsInput.click()" :disabled="uploading">
               <el-icon><Upload /></el-icon> 上传 DBD
             </el-button>
-            <span v-if="form.dbd_signed_file" class="file-status uploaded">
+                      <div v-if="form.dbd_signed_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.dbd_signed_file" :key="idx" class="file-item">
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-              {{ form.dbd_signed_file.original_name || '已上传' }}
-            </span>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('dbd_signed_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
             <input
               ref="dbdsInput"
               type="file"
@@ -185,9 +194,9 @@ onMounted(async () => {
 watch(() => props.formData, (newVal) => {
   if (!newVal || Object.keys(newVal).length === 0) return
   if (newVal.handler_type !== undefined) form.handler_type = newVal.handler_type || 'director'
-  if (newVal.power_of_attorney_file !== undefined) form.power_of_attorney_file = newVal.power_of_attorney_file
-  if (newVal.pp20_signed_file !== undefined) form.pp20_signed_file = newVal.pp20_signed_file
-  if (newVal.dbd_signed_file !== undefined) form.dbd_signed_file = newVal.dbd_signed_file
+  if (newVal.power_of_attorney_file !== undefined) form.power_of_attorney_file = normalizeFiles(newVal.power_of_attorney_file)
+  if (newVal.pp20_signed_file !== undefined) form.pp20_signed_file = normalizeFiles(newVal.pp20_signed_file)
+  if (newVal.dbd_signed_file !== undefined) form.dbd_signed_file = normalizeFiles(newVal.dbd_signed_file)
   if (newVal.has_director_passport_original !== undefined) form.has_director_passport_original = newVal.has_director_passport_original
 }, { deep: true, immediate: false })
 
@@ -239,14 +248,14 @@ async function handleFileChange(event, field) {
       const file = files[i]
       const res = await uploadFile(props.submissionId, 3, file)
       if (res.code === 200) {
-        form[field] = {
+        form[field].push({
           filename: file.name,
           original_name: res.data.original_name,
           stored_path: res.data.stored_path,
           url: res.data.url,
           mime_type: res.data.mime_type,
           size: res.data.size,
-        }
+        })
         emitUpdate()
       }
     }
@@ -257,6 +266,11 @@ async function handleFileChange(event, field) {
     uploading.value = false
     event.target.value = ''
   }
+}
+
+function removeFile(field, idx) {
+  form[field].splice(idx, 1)
+  emitUpdate()
 }
 
 var rules = {
@@ -356,4 +370,7 @@ defineExpose({ getFormData, formRef })
     margin-top: 4px;
   }
 }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
+.file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

@@ -54,10 +54,13 @@
           <el-button type="primary" plain @click="triggerUpload('dbd')" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传 DBD 文件
           </el-button>
-          <span v-if="form.dbd_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.dbd_file.original_name || '已上传' }}
-          </span>
+                    <div v-if="form.dbd_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.dbd_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('dbd_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="dbdInput"
             type="file"
@@ -74,10 +77,13 @@
           <el-button type="primary" plain @click="triggerUpload('pp20')" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传 PP.20 文件
           </el-button>
-          <span v-if="form.pp20_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.pp20_file.original_name || '已上传' }}
-          </span>
+                    <div v-if="form.pp20_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.pp20_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('pp20_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="pp20Input"
             type="file"
@@ -94,10 +100,13 @@
           <el-button type="primary" plain @click="triggerUpload('stamp')" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传印章扫描件
           </el-button>
-          <span v-if="form.company_stamp_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.company_stamp_file.original_name || '已上传' }}
-          </span>
+                    <div v-if="form.company_stamp_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.company_stamp_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('company_stamp_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="stampInput"
             type="file"
@@ -114,10 +123,13 @@
           <el-button type="primary" plain @click="triggerUpload('passport')" :disabled="uploading">
             <el-icon><Upload /></el-icon> 上传护照复印件
           </el-button>
-          <span v-if="form.director_passport_file" class="file-status uploaded">
-            <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-            {{ form.director_passport_file.original_name || '已上传' }}
-          </span>
+                    <div v-if="form.director_passport_file.length > 0" class="file-list">
+            <div v-for="(f, idx) in form.director_passport_file" :key="idx" class="file-item">
+              <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+              <span class="file-name">{{ f.original_name || '已上传' }}</span>
+              <el-button type="danger" size="small" @click="removeFile('director_passport_file', idx)" :disabled="uploading">删除</el-button>
+            </div>
+          </div>
           <input
             ref="passportInput"
             type="file"
@@ -184,12 +196,19 @@ const selectedDocId = ref(null)
 
 const inputRefs = { dbd: dbdInput, pp20: pp20Input, stamp: stampInput, passport: passportInput }
 
+// 归一化助手：旧单文件数据转数组
+function normalizeFiles(val) {
+  if (!val) return []
+  if (Array.isArray(val)) return [...val]
+  if (typeof val === 'object' && val.url) return [val]
+  return []
+}
 const form = reactive({
   company_name: props.formData?.company_name || '',
-  dbd_file: props.formData?.dbd_file || null,
-  pp20_file: props.formData?.pp20_file || null,
-  company_stamp_file: props.formData?.company_stamp_file || null,
-  director_passport_file: props.formData?.director_passport_file || null,
+  dbd_file: normalizeFiles(props.formData?.dbd_files || props.formData?.dbd_file),
+  pp20_file: normalizeFiles(props.formData?.pp20_files || props.formData?.pp20_file),
+  company_stamp_file: normalizeFiles(props.formData?.company_stamp_files || props.formData?.company_stamp_file),
+  director_passport_file: normalizeFiles(props.formData?.director_passport_files || props.formData?.director_passport_file),
   thai_address: props.formData?.thai_address || '',
   tax_id: props.formData?.tax_id || '',
 })
@@ -202,7 +221,7 @@ onMounted(async () => {
     const res = await getCompanyDocs()
     savedDocs.value = res.data || []
     // 如果当前步骤已有保存的数据（从 formData 恢复），不要用公司资料库覆盖
-    const hasStepData = form.company_name || form.dbd_file || form.pp20_file || form.company_stamp_file || form.director_passport_file || form.thai_address || form.tax_id
+    const hasStepData = form.company_name || form.dbd_file.length > 0 || form.pp20_file.length > 0 || form.company_stamp_file.length > 0 || form.director_passport_file.length > 0 || form.thai_address || form.tax_id
     if (savedDocs.value.length > 0 && !hasStepData) {
       selectedDocId.value = savedDocs.value[0].id
       fillFromDoc(savedDocs.value[0])
@@ -213,10 +232,10 @@ onMounted(async () => {
 // 监听 formData 变化，切换回来时恢复数据
 watch(() => props.formData, (newVal) => {
   if (!newVal || Object.keys(newVal).length === 0) return
-  if (newVal.dbd_file !== undefined) form.dbd_file = newVal.dbd_file
-  if (newVal.pp20_file !== undefined) form.pp20_file = newVal.pp20_file
-  if (newVal.company_stamp_file !== undefined) form.company_stamp_file = newVal.company_stamp_file
-  if (newVal.director_passport_file !== undefined) form.director_passport_file = newVal.director_passport_file
+  if (newVal.dbd_file !== undefined) form.dbd_file = normalizeFiles(newVal.dbd_file)
+  if (newVal.pp20_file !== undefined) form.pp20_file = normalizeFiles(newVal.pp20_file)
+  if (newVal.company_stamp_file !== undefined) form.company_stamp_file = normalizeFiles(newVal.company_stamp_file)
+  if (newVal.director_passport_file !== undefined) form.director_passport_file = normalizeFiles(newVal.director_passport_file)
   if (newVal.thai_address !== undefined) form.thai_address = newVal.thai_address || ''
   if (newVal.company_name !== undefined) form.company_name = newVal.company_name || ''
   if (newVal.tax_id !== undefined) form.tax_id = newVal.tax_id || ''
@@ -227,7 +246,7 @@ function onSelectDoc(id) {
     // 重新上传
     Object.assign(form, {
       dbd_file: null, pp20_file: null, company_stamp_file: null,
-      director_passport_file: null, thai_address: '', tax_id: '', company_name: '',
+      director_passport_file: [], thai_address: '', tax_id: '', company_name: '',
     })
     emit('update', { ...form })
     return
@@ -239,10 +258,10 @@ function onSelectDoc(id) {
 function fillFromDoc(doc) {
   Object.assign(form, {
     company_name: doc.company_name || '',
-    dbd_file: isFileObj(doc.dbd_file) ? doc.dbd_file : null,
-    pp20_file: isFileObj(doc.pp20_file) ? doc.pp20_file : null,
-    company_stamp_file: isFileObj(doc.company_stamp_file) ? doc.company_stamp_file : null,
-    director_passport_file: isFileObj(doc.director_passport_file) ? doc.director_passport_file : null,
+    dbd_file: isFileObj(doc.dbd_file) ? [doc.dbd_file] : [],
+    pp20_file: isFileObj(doc.pp20_file) ? [doc.pp20_file] : [],
+    company_stamp_file: isFileObj(doc.company_stamp_file) ? [doc.company_stamp_file] : [],
+    director_passport_file: isFileObj(doc.director_passport_file) ? [doc.director_passport_file] : [],
     thai_address: doc.thai_address || '',
     tax_id: doc.tax_id || '',
   })
@@ -267,18 +286,22 @@ async function handleFileChange(event, type) {
       const file = files[i]
       const res = await uploadFile(props.submissionId, 2, file)
       if (res.code === 200) {
-        const fileInfo = {
+        form[fieldMap[type]].push({
           filename: file.name, original_name: res.data.original_name,
           stored_path: res.data.stored_path, url: res.data.url,
           mime_type: res.data.mime_type, size: res.data.size,
-        }
-        form[fieldMap[type]] = fileInfo
-        emit('update', { ...form })
+        })
       }
     }
+    emit('update', { ...form })
     ElMessage.success(`${files.length} 个文件上传成功`)
   } catch { ElMessage.error('上传失败') }
   finally { uploading.value = false; event.target.value = '' }
+}
+
+function removeFile(field, idx) {
+  form[field].splice(idx, 1)
+  emit('update', { ...form })
 }
 
 function formatShort(d) {
@@ -375,4 +398,7 @@ defineExpose({ getFormData, formRef })
     }
   }
 }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
+.file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

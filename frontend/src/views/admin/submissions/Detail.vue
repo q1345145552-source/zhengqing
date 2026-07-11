@@ -50,8 +50,22 @@
             <el-descriptions-item label="物流编码">{{ step4?.logistics_code || '-' }}</el-descriptions-item>
           </template>
           <template v-else>
-            <el-descriptions-item label="商业发票">{{ step4?.invoice_file?.original_name || '未上传' }}</el-descriptions-item>
-            <el-descriptions-item label="装箱单">{{ step4?.packing_list_file?.original_name || '未上传' }}</el-descriptions-item>
+            <el-descriptions-item label="商业发票">
+              <template v-if="toFileArray(step4?.invoice_file).length">
+                <div v-for="(f, i) in toFileArray(step4?.invoice_file)" :key="'inv'+i" style="margin-bottom:2px">
+                  <el-link type="primary" :href="fileUrl(f)" target="_blank">{{ f.original_name || f.name || '文件'+(i+1) }}</el-link>
+                </div>
+              </template>
+              <span v-else>未上传</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="装箱单">
+              <template v-if="toFileArray(step4?.packing_list_file).length">
+                <div v-for="(f, i) in toFileArray(step4?.packing_list_file)" :key="'pl'+i" style="margin-bottom:2px">
+                  <el-link type="primary" :href="fileUrl(f)" target="_blank">{{ f.original_name || f.name || '文件'+(i+1) }}</el-link>
+                </div>
+              </template>
+              <span v-else>未上传</span>
+            </el-descriptions-item>
           </template>
         </el-descriptions>
       </el-tab-pane>
@@ -93,8 +107,48 @@ const step2 = computed(() => data.step2 || {})
 const step3 = computed(() => data.step3 || {})
 const step4 = computed(() => data.step4 || {})
 const step5 = computed(() => data.step5 || {})
-const step2Files = computed(() => [{label:'DBD',file:step2.value.dbd_file},{label:'PP.20',file:step2.value.pp20_file},{label:'公司印章',file:step2.value.company_stamp_file},{label:'董事护照',file:step2.value.director_passport_file}])
-const step3Files = computed(() => [{label:'授权委托书',file:step3.value.power_of_attorney_file},{label:'PP.20签字',file:step3.value.pp20_signed_file},{label:'DBD签字',file:step3.value.dbd_signed_file}])
+function fileUrl(obj) {
+  if (!obj) return ''
+  let p = obj.url || ''
+  if (!p) {
+    const sp = obj.stored_path || ''
+    const idx = sp.indexOf('/uploads/')
+    p = idx >= 0 ? sp.substring(idx) : ''
+  }
+  return p
+}
+
+const toFileArray = (field) => {
+  if (!field) return []
+  if (Array.isArray(field)) return field
+  return [field]
+}
+
+const step2Files = computed(() => [
+  { key: 'dbd_file', label: 'DBD' },
+  { key: 'pp20_file', label: 'PP.20' },
+  { key: 'company_stamp_file', label: '公司印章' },
+  { key: 'director_passport_file', label: '董事护照' },
+].flatMap(f => {
+  const files = toFileArray(step2.value[f.key])
+  if (files.length === 0) return [{ label: f.label, file: null }]
+  return files.map((file, i) => ({
+    label: files.length > 1 ? `${f.label} (${i + 1})` : f.label,
+    file
+  }))
+}))
+const step3Files = computed(() => [
+  { key: 'power_of_attorney_file', label: '授权委托书' },
+  { key: 'pp20_signed_file', label: 'PP.20签字' },
+  { key: 'dbd_signed_file', label: 'DBD签字' },
+].flatMap(f => {
+  const files = toFileArray(step3.value[f.key])
+  if (files.length === 0) return [{ label: f.label, file: null }]
+  return files.map((file, i) => ({
+    label: files.length > 1 ? `${f.label} (${i + 1})` : f.label,
+    file
+  }))
+}))
 
 onMounted(() => loadDetail())
 async function loadDetail() {

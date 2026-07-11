@@ -177,14 +177,14 @@
             </template>
             <template v-else>
               <el-descriptions-item label="商业发票">
-                <el-link v-if="step4?.invoice_file?.original_name" type="primary" :underline="false" @click="openFile(step4.invoice_file)">
-                  {{ step4.invoice_file.original_name }}
+                <el-link v-if="(Array.isArray(step4?.invoice_file) ? step4.invoice_file[0]?.original_name : step4?.invoice_file?.original_name)" type="primary" :underline="false" @click="openFile(Array.isArray(step4.invoice_file) ? step4.invoice_file[0] : step4.invoice_file)">
+                  {{ (Array.isArray(step4.invoice_file) ? step4.invoice_file[0]?.original_name : step4.invoice_file?.original_name) || '已上传' }}
                 </el-link>
                 <span v-else>未上传</span>
               </el-descriptions-item>
               <el-descriptions-item label="装箱单">
-                <el-link v-if="step4?.packing_list_file?.original_name" type="primary" :underline="false" @click="openFile(step4.packing_list_file)">
-                  {{ step4.packing_list_file.original_name }}
+                <el-link v-if="(Array.isArray(step4?.packing_list_file) ? step4.packing_list_file[0]?.original_name : step4?.packing_list_file?.original_name)" type="primary" :underline="false" @click="openFile(Array.isArray(step4.packing_list_file) ? step4.packing_list_file[0] : step4.packing_list_file)">
+                  {{ (Array.isArray(step4.packing_list_file) ? step4.packing_list_file[0]?.original_name : step4.packing_list_file?.original_name) || '已上传' }}
                 </el-link>
                 <span v-else>未上传</span>
               </el-descriptions-item>
@@ -608,17 +608,21 @@ const step3 = computed(() => data.step3 || {})
 const step4 = computed(() => data.step4 || {})
 const step5 = computed(() => data.step5 || {})
 
-const step2Files = computed(() => [
-  { label: 'DBD', file: step2.value.dbd_file },
-  { label: 'PP.20', file: step2.value.pp20_file },
-  { label: '公司印章', file: step2.value.company_stamp_file },
-  { label: '董事护照', file: step2.value.director_passport_file },
-])
-const step3Files = computed(() => [
-  { label: '授权委托书', file: step3.value.power_of_attorney_file },
-  { label: 'PP.20签字', file: step3.value.pp20_signed_file },
-  { label: 'DBD签字', file: step3.value.dbd_signed_file },
-])
+const step2Files = computed(() => {
+  const f = (v) => Array.isArray(v) && v.length > 0 ? v[0] : (v && v.url ? v : null)
+  return [
+  { label: 'DBD', file: f(step2.value?.dbd_file) },
+  { label: 'PP.20', file: f(step2.value?.pp20_file) },
+  { label: '公司印章', file: f(step2.value?.company_stamp_file) },
+  { label: '董事护照', file: f(step2.value?.director_passport_file) },
+]})
+const step3Files = computed(() => {
+  const f = (v) => Array.isArray(v) && v.length > 0 ? v[0] : (v && v.url ? v : null)
+  return [
+  { label: '授权委托书', file: f(step3.value?.power_of_attorney_file) },
+  { label: 'PP.20签字', file: f(step3.value?.pp20_signed_file) },
+  { label: 'DBD签字', file: f(step3.value?.dbd_signed_file) },
+]})
 
 const timeline = ref([])
 // 分离：体积/重量计费明细 vs 境内运费 vs 仓储费

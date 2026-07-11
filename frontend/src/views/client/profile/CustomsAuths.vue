@@ -71,10 +71,13 @@
               <el-button size="small" plain @click="$refs.poaDlgInput.click()" :disabled="uploading">
                 <el-icon><Upload /></el-icon> 上传
               </el-button>
-              <span v-if="form.power_of_attorney_file?.original_name" class="uploaded-name">
-                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-                {{ form.power_of_attorney_file.original_name }}
-              </span>
+              <div v-if="form.power_of_attorney_file.length > 0" class="file-list">
+                <div v-for="(f, idx) in form.power_of_attorney_file" :key="idx" class="file-item">
+                  <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                  <span class="uploaded-name">{{ f.original_name }}</span>
+                  <el-button type="danger" size="small" @click="removeFile('power_of_attorney_file', idx)" :disabled="uploading">删除</el-button>
+                </div>
+              </div>
               <input ref="poaDlgInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'power_of_attorney_file')" multiple />
             </div>
           </el-form-item>
@@ -84,10 +87,13 @@
               <el-button size="small" plain @click="$refs.pp20sDlgInput.click()" :disabled="uploading">
                 <el-icon><Upload /></el-icon> 上传
               </el-button>
-              <span v-if="form.pp20_signed_file?.original_name" class="uploaded-name">
-                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-                {{ form.pp20_signed_file.original_name }}
-              </span>
+              <div v-if="form.pp20_signed_file.length > 0" class="file-list">
+                <div v-for="(f, idx) in form.pp20_signed_file" :key="idx" class="file-item">
+                  <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                  <span class="uploaded-name">{{ f.original_name }}</span>
+                  <el-button type="danger" size="small" @click="removeFile('pp20_signed_file', idx)" :disabled="uploading">删除</el-button>
+                </div>
+              </div>
               <input ref="pp20sDlgInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'pp20_signed_file')" multiple />
             </div>
           </el-form-item>
@@ -97,10 +103,13 @@
               <el-button size="small" plain @click="$refs.dbdsDlgInput.click()" :disabled="uploading">
                 <el-icon><Upload /></el-icon> 上传
               </el-button>
-              <span v-if="form.dbd_signed_file?.original_name" class="uploaded-name">
-                <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
-                {{ form.dbd_signed_file.original_name }}
-              </span>
+              <div v-if="form.dbd_signed_file.length > 0" class="file-list">
+                <div v-for="(f, idx) in form.dbd_signed_file" :key="idx" class="file-item">
+                  <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
+                  <span class="uploaded-name">{{ f.original_name }}</span>
+                  <el-button type="danger" size="small" @click="removeFile('dbd_signed_file', idx)" :disabled="uploading">删除</el-button>
+                </div>
+              </div>
               <input ref="dbdsDlgInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'dbd_signed_file')" multiple />
             </div>
           </el-form-item>
@@ -163,9 +172,7 @@ function editAuth(auth) {
   form.auth_type = auth.auth_type || 'director'
   form.account_number = auth.account_number || ''
   form.password = auth.password || ''
-  form.power_of_attorney_file = auth.power_of_attorney_file && typeof auth.power_of_attorney_file === 'object' && auth.power_of_attorney_file.original_name ? auth.power_of_attorney_file : null
-  form.pp20_signed_file = auth.pp20_signed_file && typeof auth.pp20_signed_file === 'object' && auth.pp20_signed_file.original_name ? auth.pp20_signed_file : null
-  form.dbd_signed_file = auth.dbd_signed_file && typeof auth.dbd_signed_file === 'object' && auth.dbd_signed_file.original_name ? auth.dbd_signed_file : null
+
   form.notes = auth.notes || ''
   showDialog.value = true
 }
@@ -179,13 +186,13 @@ async function handleDialogUpload(event, field) {
       const file = files[i]
       const res = await uploadProfileFile(file)
       if (res.code === 200) {
-        form[field] = {
+        form[field].push({
           original_name: res.data.original_name,
           stored_path: res.data.stored_path,
           url: res.data.url,
           mime_type: res.data.mime_type,
           size: res.data.size,
-        }
+        })
       }
     }
     ElMessage.success(`${files.length} 个文件上传成功`)
@@ -195,6 +202,10 @@ async function handleDialogUpload(event, field) {
     uploading.value = false
     event.target.value = ''
   }
+}
+
+function removeFile(field, idx) {
+  form[field].splice(idx, 1)
 }
 
 async function handleSave() {
@@ -207,9 +218,9 @@ async function handleSave() {
       auth_type: form.auth_type,
       account_number: form.account_number,
       password: form.password,
-      power_of_attorney_file: form.power_of_attorney_file,
-      pp20_signed_file: form.pp20_signed_file,
-      dbd_signed_file: form.dbd_signed_file,
+      power_of_attorney_file: form.power_of_attorney_file.length > 0 ? form.power_of_attorney_file : null,
+      pp20_signed_file: form.pp20_signed_file.length > 0 ? form.pp20_signed_file : null,
+      dbd_signed_file: form.dbd_signed_file.length > 0 ? form.dbd_signed_file : null,
       notes: form.notes,
     }
 
@@ -315,4 +326,7 @@ function formatDate(d) {
     font-size: 13px;
   }
 }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
+.file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

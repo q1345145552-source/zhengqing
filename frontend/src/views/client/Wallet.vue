@@ -58,13 +58,14 @@
           <el-upload
             :auto-upload="false"
             :limit="10"
+            multiple
             :on-change="handleSlipChange"
             :on-remove="handleSlipRemove"
             :file-list="slipFileList"
             accept="image/*,.pdf"
             list-type="picture"
           >
-            <el-button type="primary" :disabled="slipFileList.length >= 1">
+            <el-button type="primary">
               选择水单图片
             </el-button>
             <template #tip>
@@ -195,7 +196,7 @@ const showRecharge = ref(false)
 const recharging = ref(false)
 const rechargeForm = ref({ amount: 1000, description: '' })
 const slipFileList = ref([])
-const slipFile = ref(null)
+const slipFiles = ref([])
 const showSlip = ref(false)
 const slipUrl = ref('')
 const chargeHistory = ref([])
@@ -215,12 +216,13 @@ async function loadChargeHistory() {
 }
 
 function handleSlipChange(file) {
-  slipFile.value = file.raw
-  slipFileList.value = [file]
+  if (!slipFiles.value) slipFiles.value = []
+  slipFiles.value.push(file.raw)
+  slipFileList.value.push(file)
 }
 
 function handleSlipRemove() {
-  slipFile.value = null
+  slipFiles.value = []
   slipFileList.value = []
 }
 
@@ -234,8 +236,8 @@ async function handleRecharge() {
     const formData = new FormData()
     formData.append('amount', String(rechargeForm.value.amount))
     formData.append('description', rechargeForm.value.description || '在线充值')
-    if (slipFile.value) {
-      formData.append('slip', slipFile.value)
+    if (slipFiles.value) {
+      formData.append('slip', slipFiles.value)
     }
     await request.post('/finance/client/deposit', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -243,8 +245,9 @@ async function handleRecharge() {
     ElMessage.success('充值申请已提交，等待员工审核')
     showRecharge.value = false
     rechargeForm.value = { amount: 1000, description: '' }
-    slipFile.value = null
+    slipFiles.value = null
     slipFileList.value = []
+  slipFiles.value = []
     loadDepositRequests()
   } catch { /* handled */ }
   finally { recharging.value = false }
