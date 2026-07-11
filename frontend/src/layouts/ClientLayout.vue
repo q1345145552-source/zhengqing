@@ -4,7 +4,7 @@
     <el-header class="client-header">
       <div class="header-left">
         <el-icon :size="28" color="#409EFF"><Ship /></el-icon>
-        <span class="system-title">湘泰正清系统</span>
+        <span class="system-title"><span class="title-full">湘泰正清系统</span><span class="title-short">正清</span></span>
       </div>
       <div class="header-right">
         <el-button size="default" @click="handleNav('/client/dashboard')">
@@ -143,6 +143,7 @@ $brand-navy: #132b44;
       font-weight: 700;
       color: #fff;
       letter-spacing: 1px;
+      .title-short { display: none; }
     }
   }
 
@@ -213,6 +214,8 @@ $brand-navy: #132b44;
       .system-title {
         font-size: 15px !important;
         letter-spacing: 0 !important;
+        .title-full { display: none; }
+        .title-short { display: inline; }
       }
     }
 
