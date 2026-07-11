@@ -1,5 +1,5 @@
 <template>
-  <div class="my-submissions">
+  <div class="client-page my-submissions">
     <div class="page-header">
       <h2><el-icon><Document /></el-icon> 我的申请</h2>
       <el-radio-group v-model="filter" size="small" @change="loadList">
@@ -232,5 +232,10 @@ async function handleResubmit(item) {
 .card-actions {
   display: flex; justify-content: space-between; align-items: center;
   .card-meta { font-size: 13px; color: #909399; display: flex; align-items: center; gap: 4px; }
+}
+
+@media (max-width: 768px) {
+  h2 { font-size: 18px; }
+  .search-bar { flex-wrap: wrap; }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-page">
+  <div class="client-page dashboard-page">
     <!-- 欢迎横幅 -->
     <div class="welcome-banner">
       <div>
@@ -112,4 +112,19 @@ onMounted(async () => {
 .announce-scroll::-webkit-scrollbar { display:none; }
 .announce-item { display:flex; align-items:center; gap:8px; white-space:nowrap; flex-shrink:0; }
 .announce-text { font-size:13px; color:#606266; max-width:400px; overflow:hidden; text-overflow:ellipsis; }
+
+/* 手机端 */
+@media (max-width: 768px) {
+  .welcome-banner { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+  .welcome-banner h1 { font-size: 18px; }
+  .core-entries { grid-template-columns: 1fr; gap: 10px; }
+  .core-card { padding: 16px; }
+  .core-title { font-size: 15px; }
+  .core-desc { font-size: 11px; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-card { padding: 12px 8px; }
+  .stat-num { font-size: 18px; }
+  .announce-bar { flex-direction: column; }
+}
+
 </style>

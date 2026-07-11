@@ -1,5 +1,5 @@
 <template>
-  <div class="wallet-page">
+  <div class="client-page wallet-page">
     <h2><el-icon><Coin /></el-icon> 我的钱包</h2>
 
     <!-- 余额卡片 -->
@@ -291,4 +291,10 @@ h2 { display: flex; align-items: center; gap: 8px; font-size: 22px; margin: 0 0 
 .balance-main { display: flex; flex-direction: column; gap: 8px; }
 .balance-label { font-size: 14px; opacity: .8; }
 .balance-value { font-size: 40px; font-weight: 700; }
+
+@media (max-width: 768px) {
+  .balance-card { text-align: center; }
+  .balance-value { font-size: 24px; }
+  .el-card[header="收款银行账户"] :deep(.el-descriptions__label) { width: 80px !important; }
+}
 </style>

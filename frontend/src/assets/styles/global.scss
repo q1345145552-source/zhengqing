@@ -133,3 +133,172 @@ a {
 .mt-16 { margin-top: 16px; }
 .mt-24 { margin-top: 24px; }
 .mb-16 { margin-bottom: 16px; }
+
+/* ========================================
+   手机端适配 — 客户端通用
+   员工端/管理员端不受影响
+   ======================================== */
+
+@media (max-width: 768px) {
+  /* 全局容器 */
+  .client-main,
+  .client-layout .el-main {
+    padding: 12px 8px !important;
+    max-width: 100% !important;
+  }
+
+  /* 表格 → 卡片模式（客户端页面用 .mobile-card-table 类标记） */
+  .client-page .el-table {
+    /* 隐藏表头 */
+    .el-table__header-wrapper { display: none !important; }
+    /* 每个 tr 变成卡片 */
+    .el-table__body-wrapper .el-table__row {
+      display: block !important;
+      margin-bottom: 12px;
+      border: 1px solid #e4e7ed;
+      border-radius: 8px;
+      padding: 8px 0;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .el-table__body-wrapper .el-table__row td {
+      display: flex !important;
+      align-items: center;
+      padding: 6px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .el-table__body-wrapper .el-table__row td:last-child { border-bottom: none; }
+    .el-table__body-wrapper .el-table__row td .cell {
+      flex: 1;
+      white-space: normal;
+      word-break: break-all;
+    }
+    /* 动态添加标签前缀（通过 data-label 属性） */
+    .el-table__body-wrapper .el-table__row td[data-label]::before {
+      content: attr(data-label);
+      width: 80px;
+      min-width: 80px;
+      font-weight: 600;
+      color: #606266;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+  }
+
+  /* 通用表格移动端优化（非卡片模式） */
+  .el-table {
+    font-size: 12px;
+  }
+  .el-table .el-button {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+
+  /* 表单 — 全宽 + label 在上方 */
+  .el-form {
+    .el-form-item {
+      margin-bottom: 16px;
+    }
+    .el-form-item__label {
+      float: none !important;
+      display: block !important;
+      width: 100% !important;
+      text-align: left !important;
+      padding: 0 0 4px 0 !important;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .el-form-item__content {
+      margin-left: 0 !important;
+    }
+  }
+
+  /* 输入框全宽 */
+  .el-input,
+  .el-select,
+  .el-date-picker {
+    width: 100% !important;
+  }
+
+  /* 按钮 — 手指点击友好 */
+  .el-button {
+    min-height: 40px;
+    font-size: 14px;
+  }
+  .el-button--small {
+    min-height: 34px;
+    font-size: 13px;
+  }
+
+  /* 卡片全宽 */
+  .el-card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 8px;
+  }
+
+  /* 描述列表 */
+  .el-descriptions {
+    font-size: 12px;
+  }
+  .el-descriptions__label {
+    width: 90px !important;
+    min-width: 90px !important;
+    font-size: 12px;
+  }
+
+  /* 步骤条缩小 */
+  .el-steps {
+    .el-step__title {
+      font-size: 12px !important;
+    }
+    .el-step__description {
+      font-size: 11px !important;
+    }
+  }
+
+  /* Radio/Checkbox 组 换行 */
+  .el-radio-group,
+  .el-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* 弹窗/dialog 全屏化 */
+  .el-dialog {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin-top: 5vh !important;
+  }
+
+  /* 分页缩小 */
+  .el-pagination {
+    font-size: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .el-pagination .el-pager li {
+    min-width: 28px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 12px;
+  }
+
+  /* 标签缩小 */
+  .el-tag {
+    font-size: 11px;
+    padding: 0 6px;
+    height: 22px;
+    line-height: 22px;
+  }
+
+  /* 页脚缩小 */
+  .client-footer,
+  .client-layout .el-footer {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+}

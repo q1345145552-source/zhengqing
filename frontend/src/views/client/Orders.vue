@@ -1,5 +1,5 @@
 <template>
-  <div class="orders-page">
+  <div class="client-page orders-page">
     <h2><el-icon><Document /></el-icon> {{ t('nav.myOrders') }}</h2>
     <p class="page-desc">{{ t('status.completed') }}</p>
 
@@ -76,4 +76,12 @@ h2 { display: flex; align-items: center; gap: 8px; font-size: 22px; margin: 0 0 
 .card-number-item { font-size: 15px; font-weight: 600; color: #E6A23C; }
 .card-meta { font-size: 12px; color: #c0c4cc; margin-top: 4px; }
 .pagination-wrap { display: flex; justify-content: center; margin-top: 20px; }
+
+@media (max-width: 768px) {
+  .search-bar { flex-wrap: wrap; }
+  .order-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
+  .card-header { flex-wrap: wrap; gap: 6px; }
+  .card-numbers { flex-wrap: wrap; gap: 10px; font-size: 12px; }
+  .card-info-row { flex-wrap: wrap; font-size: 12px; }
+}
 </style>

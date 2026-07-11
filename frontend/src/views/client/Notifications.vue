@@ -1,5 +1,5 @@
 <template>
-  <div class="notifications-page">
+  <div class="client-page notifications-page">
     <div class="page-header">
       <h2><el-icon><Bell /></el-icon> 消息通知</h2>
       <el-button size="small" @click="markAllRead" v-if="list.some(n=>!n.is_read)">全部已读</el-button>
@@ -68,4 +68,8 @@ function format(d) { return d ? new Date(d).toLocaleString('zh-CN') : '-' }
 .notif-title { display: flex; justify-content: space-between; align-items: center; }
 .notif-time { font-size: 12px; color: #c0c4cc; }
 .notif-content { margin: 6px 0 0; font-size: 14px; color: #606266; line-height: 1.5; }
+
+@media (max-width: 768px) {
+  h2 { font-size: 18px; }
+}
 </style>

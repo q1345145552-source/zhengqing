@@ -1,5 +1,5 @@
 <template>
-  <div class="price-page">
+  <div class="client-page price-page">
     <h2><el-icon><Money /></el-icon> 价格查询</h2>
 
     <el-tabs v-model="tab" type="border-card">
@@ -210,4 +210,9 @@ h3 { display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0 0 
 .result-value { font-size: 18px; font-weight: 600; color: #303133; }
 .result-row-total { padding-top: 4px; }
 .result-value-total { font-size: 28px; color: #409EFF; }
+
+@media (max-width: 768px) {
+  .price-page { padding: 0 4px; }
+  .el-tabs__header { overflow-x: auto; }
+}
 </style>

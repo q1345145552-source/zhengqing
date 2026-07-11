@@ -201,4 +201,43 @@ $brand-navy: #132b44;
   background: #fff;
   border-top: 1px solid #e8ecf0;
 }
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+  .client-header {
+    height: 48px !important;
+    padding: 0 8px !important;
+
+    .header-left {
+      gap: 6px;
+      .system-title {
+        font-size: 15px !important;
+        letter-spacing: 0 !important;
+      }
+    }
+
+    .header-right {
+      gap: 2px;
+      :deep(.el-button) {
+        padding: 4px 6px !important;
+        font-size: 12px !important;
+        min-height: 32px !important;
+        .el-icon { font-size: 14px !important; }
+      }
+      .username {
+        font-size: 12px !important;
+        display: none; /* 手机端隐藏用户名，只显示头像 */
+      }
+      .el-badge {
+        :deep(.el-badge__content) {
+          font-size: 10px;
+          height: 16px;
+          line-height: 16px;
+          padding: 0 4px;
+        }
+      }
+    }
+  }
+}
+
 </style>

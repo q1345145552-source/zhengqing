@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-wizard">
+  <div class="client-page upload-wizard">
     <!-- 头部 -->
     <div class="wizard-header">
       <h2>
@@ -333,5 +333,10 @@ async function handleSubmit() {
   justify-content: center;
   gap: 12px;
   padding-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+  .upload-wizard { padding: 0 4px; }
+  .el-steps { overflow-x: auto; }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="my-profile">
+  <div class="client-page my-profile">
     <div class="profile-header">
       <h2>
         <el-icon><FolderOpened /></el-icon>
@@ -58,5 +58,10 @@ const activeTab = ref('company')
     margin: 0;
     line-height: 1.6;
   }
+}
+
+@media (max-width: 768px) {
+  .profile-header { padding: 16px; }
+  .el-tabs__header { overflow-x: auto; }
 }
 </style>

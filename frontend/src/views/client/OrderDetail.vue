@@ -1,5 +1,5 @@
 <template>
-  <div class="detail-page" v-loading="loading">
+  <div class="client-page detail-page" v-loading="loading">
     <div class="page-top">
       <el-button text @click="$router.back()"><el-icon><ArrowLeft /></el-icon> 返回</el-button>
       <div class="top-info" v-if="data.id">
@@ -342,4 +342,11 @@ h4 { font-size: 14px; color: #606266; margin: 0 0 8px; }
 .balance-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: #606266; }
 .balance-row span:last-child { font-weight: 600; }
 .balance-charge { border-top: 1px dashed #DCDFE6; padding-top: 8px; margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .order-detail { padding: 0 4px; }
+  .el-descriptions { font-size: 12px; }
+  .el-row { margin-left: 0 !important; margin-right: 0 !important; }
+  .el-col { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 8px; }
+}
 </style>

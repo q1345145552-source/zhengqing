@@ -401,4 +401,12 @@ defineExpose({ getFormData, formRef })
 .file-list { margin-top: 8px; }
 .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; background: #f0f9eb; border: 1px solid #e1f3d8; border-radius: 6px; }
 .file-item .file-name { flex: 1; font-size: 13px; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 768px) {
+  .step-title { font-size: 16px !important; }
+  .step-desc { font-size: 12px !important; }
+  .upload-row { flex-direction: column !important; align-items: flex-start !important; }
+  .upload-row .el-button { width: 100%; }
+  .el-form-item__content { width: 100%; }
+  .el-input, .el-select, .el-input-number { width: 100% !important; }
+}
 </style>

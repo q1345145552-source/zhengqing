@@ -266,4 +266,12 @@ defineExpose({ getFormData, formRef })
     margin-top: 4px;
   }
 }
+@media (max-width: 768px) {
+  .step-title { font-size: 16px !important; }
+  .step-desc { font-size: 12px !important; }
+  .upload-row { flex-direction: column !important; align-items: flex-start !important; }
+  .upload-row .el-button { width: 100%; }
+  .el-form-item__content { width: 100%; }
+  .el-input, .el-select, .el-input-number { width: 100% !important; }
+}
 </style>
