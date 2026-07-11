@@ -245,7 +245,7 @@ function onSelectDoc(id) {
   if (id === 0) {
     // 重新上传
     Object.assign(form, {
-      dbd_file: null, pp20_file: null, company_stamp_file: null,
+      dbd_file: [], pp20_file: [], company_stamp_file: [],
       director_passport_file: [], thai_address: '', tax_id: '', company_name: '',
     })
     emit('update', { ...form })
@@ -258,10 +258,10 @@ function onSelectDoc(id) {
 function fillFromDoc(doc) {
   Object.assign(form, {
     company_name: doc.company_name || '',
-    dbd_file: isFileObj(doc.dbd_file) ? [doc.dbd_file] : [],
-    pp20_file: isFileObj(doc.pp20_file) ? [doc.pp20_file] : [],
-    company_stamp_file: isFileObj(doc.company_stamp_file) ? [doc.company_stamp_file] : [],
-    director_passport_file: isFileObj(doc.director_passport_file) ? [doc.director_passport_file] : [],
+    dbd_file: normalizeFiles(doc.dbd_file),
+    pp20_file: normalizeFiles(doc.pp20_file),
+    company_stamp_file: normalizeFiles(doc.company_stamp_file),
+    director_passport_file: normalizeFiles(doc.director_passport_file),
     thai_address: doc.thai_address || '',
     tax_id: doc.tax_id || '',
   })

@@ -6,9 +6,7 @@ import request from './request'
 export function uploadProfileFile(file) {
   const formData = new FormData()
   formData.append('file', file)
-  return request.post('/client/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  return request.post('/client/upload', formData)
 }
 
 // ===== 公司资料 =====

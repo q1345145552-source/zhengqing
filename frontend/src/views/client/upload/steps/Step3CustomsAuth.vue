@@ -169,11 +169,18 @@ const uploading = ref(false)
 const savedAuths = ref([])
 const selectedAuthId = ref(null)
 
+// 归一化助手：旧单文件数据转数组
+function normalizeFiles(val) {
+  if (!val) return []
+  if (Array.isArray(val)) return [...val]
+  if (typeof val === 'object' && val.url) return [val]
+  return []
+}
 const form = reactive({
   handler_type: props.formData?.handler_type || 'director',
-  power_of_attorney_file: props.formData?.power_of_attorney_file || null,
-  pp20_signed_file: props.formData?.pp20_signed_file || null,
-  dbd_signed_file: props.formData?.dbd_signed_file || null,
+  power_of_attorney_file: normalizeFiles(props.formData?.power_of_attorney_file),
+  pp20_signed_file: normalizeFiles(props.formData?.pp20_signed_file),
+  dbd_signed_file: normalizeFiles(props.formData?.dbd_signed_file),
   has_director_passport_original: props.formData?.has_director_passport_original || false,
 })
 
@@ -182,7 +189,7 @@ onMounted(async () => {
     const res = await getCustomsAuths()
     savedAuths.value = res.data || []
     // 如果当前步骤已有保存的数据（从 formData 恢复），不要用报关授权库覆盖
-    const hasStepData = form.power_of_attorney_file || form.pp20_signed_file || form.dbd_signed_file || form.handler_type !== 'director'
+    const hasStepData = form.power_of_attorney_file.length > 0 || form.pp20_signed_file.length > 0 || form.dbd_signed_file.length > 0 || form.handler_type !== 'director'
     if (savedAuths.value.length > 0 && !hasStepData) {
       selectedAuthId.value = savedAuths.value[0].id
       fillFromAuth(savedAuths.value[0])
@@ -203,8 +210,8 @@ watch(() => props.formData, (newVal) => {
 function onSelectAuth(id) {
   if (id === 0) {
     Object.assign(form, {
-      handler_type: 'director', power_of_attorney_file: null,
-      pp20_signed_file: null, dbd_signed_file: null,
+      handler_type: 'director', power_of_attorney_file: [],
+      pp20_signed_file: [], dbd_signed_file: [],
       has_director_passport_original: false,
     })
     emitUpdate()
@@ -217,9 +224,9 @@ function onSelectAuth(id) {
 function fillFromAuth(auth) {
   Object.assign(form, {
     handler_type: auth.auth_type || 'director',
-    power_of_attorney_file: isFileObj(auth.power_of_attorney_file) ? auth.power_of_attorney_file : null,
-    pp20_signed_file: isFileObj(auth.pp20_signed_file) ? auth.pp20_signed_file : null,
-    dbd_signed_file: isFileObj(auth.dbd_signed_file) ? auth.dbd_signed_file : null,
+    power_of_attorney_file: normalizeFiles(auth.power_of_attorney_file),
+    pp20_signed_file: normalizeFiles(auth.pp20_signed_file),
+    dbd_signed_file: normalizeFiles(auth.dbd_signed_file),
     has_director_passport_original: false,
   })
   emitUpdate()

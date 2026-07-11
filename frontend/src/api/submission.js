@@ -41,9 +41,7 @@ export function uploadFile(id, stage, file) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('stage', stage)
-  return request.post(`/submissions/${id}/upload`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  return request.post(`/submissions/${id}/upload`, formData)
 }
 
 /**
