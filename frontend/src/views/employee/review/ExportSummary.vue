@@ -197,7 +197,7 @@
 
         <!-- 海关关税 -->
         <div v-if="(data.customs_duty_amount || 0) > 0" class="customs-duty-bar">
-          <span>海关关税</span>
+          <span>海关关税（关税+货值的7%）</span>
           <span style="font-weight:700;color:#E6A23C;font-size:15px">{{ (data.customs_duty_amount || 0).toLocaleString() }} ฿</span>
         </div>
 
@@ -208,7 +208,7 @@
         </div>
         <div class="total-bar" style="color:#606266">
           <span>增值税 VAT 7%</span>
-          <span class="total-amount" style="font-size:14px">{{ Math.round((data.finance?.subtotal_amount || 0) * 0.07).toLocaleString() }} ฿</span>
+          <span class="total-amount" style="font-size:14px">{{ Math.round(((data.finance?.subtotal_amount || 0) - (data.customs_duty_amount || 0)) * 0.07).toLocaleString() }} ฿</span>
         </div>
         <div class="total-bar">
           <span>含税总计</span>

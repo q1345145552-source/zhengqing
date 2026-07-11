@@ -35,7 +35,7 @@ const translations = {
     remark: '备注',
     remarkText: '本发票为电子发票，与纸质发票具有同等法律效力',
     currency: '泰铢',
-    customsDuty: '海关关税',
+    customsDuty: '海关关税（关税+货值的7%）',
     routes: { nanning_bangkok: '南宁 → 曼谷', guangzhou_bangkok: '广州深圳 → 曼谷', yiwu_bangkok: '义乌 → 曼谷' },
   },
   th: {
@@ -65,7 +65,7 @@ const translations = {
     remark: 'หมายเหตุ',
     remarkText: 'ใบแจ้งหนี้นี้เป็นใบแจ้งหนี้อิเล็กทรอนิกส์ มีผลทางกฎหมายเทียบเท่าใบแจ้งหนี้กระดาษ',
     currency: 'บาท',
-    customsDuty: 'ค่าภาษีศุลกากร',
+    customsDuty: 'ค่าภาษีศุลกากร (ภาษี+7% ของมูลค่าสินค้า)',
     routes: { nanning_bangkok: 'หนานหนิง ไปยัง กรุงเทพ', guangzhou_bangkok: 'กวางโจว/เซินเจิ้น ไปยัง กรุงเทพ', yiwu_bangkok: 'อี้อู ไปยัง กรุงเทพ' },
     feeNames: {
       freight_cbm: 'ค่าขนส่งระหว่างประเทศ (ตามปริมาตร)',
@@ -224,15 +224,17 @@ async function generateInvoice(submissionId, lang = 'zh') {
     doc.text(`${tStr(t.subtotal)} ${subtotal.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
 
-    // === VAT 7% ===
-    const vatAmount = Math.round(subtotal * 0.07);
+    // === VAT 7% (仅对非关税费用计算) ===
+    const customsDutyAmt = data.customs_duty_amount || 0;
+    const taxable = subtotal - customsDutyAmt;
+    const vatAmount = Math.round(taxable * 0.07);
     doc.fontSize(12).fillColor('#666');
     doc.text(`${tStr(t.vat)} ${vatAmount.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);
     doc.moveDown(0.8);
 
-    // === Grand Total (subtotal + VAT) ===
-    const grandTotal = subtotal + vatAmount;
+    // === Grand Total (应税合计 × 1.07 + 关税) ===
+    const grandTotal = Math.round(taxable * 1.07) + customsDutyAmt;
     doc.fontSize(16).fillColor('#E6A23C');
     doc.text(`${tStr(t.grandTotal)} ${grandTotal.toLocaleString()} ${t.currency}`, { align: 'right' });
     doc.fillColor('#000').fontSize(10);

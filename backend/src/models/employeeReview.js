@@ -244,8 +244,9 @@ const EmployeeReview = {
     const storageCharge = charges.rows.find(c => c.fee_type === 'storage');
     const serviceCharges = charges.rows.filter(c => c.is_optional);
     const customsDuty = parseFloat(s.customs_duty_amount) || 0;
-    const subtotalAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0) + customsDuty;
-    const grandTotalAmount = Math.round(subtotalAmount * 1.07);
+    const baseAmount = charges.rows.filter(c => c.selected).reduce((sum, c) => sum + parseFloat(c.amount), 0);
+    const subtotalAmount = baseAmount + customsDuty;
+    const grandTotalAmount = Math.round(Math.round(baseAmount * 1.07) + customsDuty);
 
     return {
       // 基本信息

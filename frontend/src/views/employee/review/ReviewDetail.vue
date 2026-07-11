@@ -313,11 +313,11 @@
             <div style="text-align:right;margin-top:8px;font-size:15px;font-weight:600;color:#E6A23C">附加服务合计: ฿{{ serviceTotal }}</div>
           </div>
 
-          <!-- 海关关税 -->
+          <!-- 海关关税（关税+货值的7%） -->
           <div style="margin-top:20px">
-            <h4>海关关税</h4>
+            <h4>海关关税（关税+货值的7%）</h4>
             <el-form :model="customsDutyForm" inline>
-              <el-form-item label="海关关税 (฿)">
+              <el-form-item label="海关关税（关税+货值的7%）(฿)">
                 <el-input-number v-model="customsDutyForm.amount" :min="0" :step="100" :precision="2" size="small" style="width:180px" placeholder="根据Next账单填写" />
               </el-form-item>
               <el-form-item>
@@ -356,11 +356,11 @@
               </div>
               <div class="summary-row" style="color:#606266">
                 <span>增值税 VAT 7%</span>
-                <span>{{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 0.07).toLocaleString() }} ฿</span>
+                <span>{{ Math.round(parseFloat(totalAmount) * 0.07).toLocaleString() }} ฿</span>
               </div>
               <div class="summary-row" style="color:#E6A23C;font-size:16px;font-weight:700">
                 <span>含税总计</span>
-                <span>{{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 1.07).toLocaleString() }} ฿</span>
+                <span>{{ Math.round(Math.round(parseFloat(totalAmount) * 1.07) + (customsDutyForm.amount || 0)).toLocaleString() }} ฿</span>
               </div>
             </div>
             <div style="margin-top:16px;display:flex;align-items:center;gap:16px">
@@ -391,7 +391,7 @@
             <div class="pay-icon-wrap"><el-icon :size="36" color="#fff"><Clock /></el-icon></div>
             <div class="pay-text">
               <div class="pay-title">待扣款</div>
-              <div class="pay-amount">应收 {{ Math.round((parseFloat(totalAmount) + (customsDutyForm.amount || 0)) * 1.07).toLocaleString() }} ฿</div>
+              <div class="pay-amount">应收 {{ Math.round(Math.round(parseFloat(totalAmount) * 1.07) + (customsDutyForm.amount || 0)).toLocaleString() }} ฿</div>
               <div class="pay-time">推进到「已到泰国仓库」时自动扣款</div>
             </div>
           </div>
