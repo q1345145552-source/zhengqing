@@ -83,7 +83,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
             hidden
-            @change="(e) => handleFileChange(e, 'invoice_file')"
+            @change="(e) => handleFileChange(e, 'invoice_file')" multiple
           />
         </div>
       </el-form-item>
@@ -102,7 +102,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
             hidden
-            @change="(e) => handleFileChange(e, 'packing_list_file')"
+            @change="(e) => handleFileChange(e, 'packing_list_file')" multiple
           />
         </div>
       </el-form-item>
@@ -156,24 +156,27 @@ function handleRebateChange() {
 }
 
 async function handleFileChange(event, field) {
-  const file = event.target.files?.[0]
-  if (!file) return
+  const files = event.target.files
+  if (!files || files.length === 0) return
 
   uploading.value = true
   try {
-    const res = await uploadFile(props.submissionId, 4, file)
-    if (res.code === 200) {
-      form[field] = {
-        filename: file.name,
-        original_name: res.data.original_name,
-        stored_path: res.data.stored_path,
-        url: res.data.url,
-        mime_type: res.data.mime_type,
-        size: res.data.size,
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const res = await uploadFile(props.submissionId, 4, file)
+      if (res.code === 200) {
+        form[field] = {
+          filename: file.name,
+          original_name: res.data.original_name,
+          stored_path: res.data.stored_path,
+          url: res.data.url,
+          mime_type: res.data.mime_type,
+          size: res.data.size,
+        }
+        emitUpdate()
       }
-      emitUpdate()
-      ElMessage.success(`${file.name} 上传成功`)
     }
+    ElMessage.success(`${files.length} 个文件上传成功`)
   } catch {
     ElMessage.error('上传失败')
   } finally {

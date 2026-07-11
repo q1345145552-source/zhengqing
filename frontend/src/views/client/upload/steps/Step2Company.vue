@@ -63,7 +63,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
             hidden
-            @change="(e) => handleFileChange(e, 'dbd')"
+            @change="(e) => handleFileChange(e, 'dbd')" multiple
           />
         </div>
       </el-form-item>
@@ -83,7 +83,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
             hidden
-            @change="(e) => handleFileChange(e, 'pp20')"
+            @change="(e) => handleFileChange(e, 'pp20')" multiple
           />
         </div>
       </el-form-item>
@@ -103,7 +103,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png"
             hidden
-            @change="(e) => handleFileChange(e, 'stamp')"
+            @change="(e) => handleFileChange(e, 'stamp')" multiple
           />
         </div>
       </el-form-item>
@@ -123,7 +123,7 @@
             type="file"
             accept=".pdf,.jpg,.jpeg,.png"
             hidden
-            @change="(e) => handleFileChange(e, 'passport')"
+            @change="(e) => handleFileChange(e, 'passport')" multiple
           />
         </div>
       </el-form-item>
@@ -258,22 +258,25 @@ function triggerUpload(type) {
 }
 
 async function handleFileChange(event, type) {
-  const file = event.target.files?.[0]
-  if (!file) return
+  const files = event.target.files
+  if (!files || files.length === 0) return
   uploading.value = true
+  const fieldMap = { dbd: 'dbd_file', pp20: 'pp20_file', stamp: 'company_stamp_file', passport: 'director_passport_file' }
   try {
-    const res = await uploadFile(props.submissionId, 2, file)
-    if (res.code === 200) {
-      const fileInfo = {
-        filename: file.name, original_name: res.data.original_name,
-        stored_path: res.data.stored_path, url: res.data.url,
-        mime_type: res.data.mime_type, size: res.data.size,
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const res = await uploadFile(props.submissionId, 2, file)
+      if (res.code === 200) {
+        const fileInfo = {
+          filename: file.name, original_name: res.data.original_name,
+          stored_path: res.data.stored_path, url: res.data.url,
+          mime_type: res.data.mime_type, size: res.data.size,
+        }
+        form[fieldMap[type]] = fileInfo
+        emit('update', { ...form })
       }
-      const fieldMap = { dbd: 'dbd_file', pp20: 'pp20_file', stamp: 'company_stamp_file', passport: 'director_passport_file' }
-      form[fieldMap[type]] = fileInfo
-      emit('update', { ...form })
-      ElMessage.success(`${file.name} 上传成功`)
     }
+    ElMessage.success(`${files.length} 个文件上传成功`)
   } catch { ElMessage.error('上传失败') }
   finally { uploading.value = false; event.target.value = '' }
 }

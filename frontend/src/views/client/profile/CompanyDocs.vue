@@ -79,7 +79,7 @@
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
               {{ form.dbd_file.original_name }}
             </span>
-            <input ref="dbdDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'dbd_file')" />
+            <input ref="dbdDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'dbd_file')" multiple />
           </div>
         </el-form-item>
 
@@ -92,7 +92,7 @@
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
               {{ form.pp20_file.original_name }}
             </span>
-            <input ref="pp20DialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'pp20_file')" />
+            <input ref="pp20DialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'pp20_file')" multiple />
           </div>
         </el-form-item>
 
@@ -105,7 +105,7 @@
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
               {{ form.company_stamp_file.original_name }}
             </span>
-            <input ref="stampDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'company_stamp_file')" />
+            <input ref="stampDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'company_stamp_file')" multiple />
           </div>
         </el-form-item>
 
@@ -118,7 +118,7 @@
               <el-icon color="#67C23A"><CircleCheckFilled /></el-icon>
               {{ form.director_passport_file.original_name }}
             </span>
-            <input ref="passDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'director_passport_file')" />
+            <input ref="passDialogInput" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden @change="(e) => handleDialogUpload(e, 'director_passport_file')" multiple />
           </div>
         </el-form-item>
       </el-form>
@@ -188,21 +188,24 @@ function editDoc(doc) {
 }
 
 async function handleDialogUpload(event, field) {
-  const file = event.target.files?.[0]
-  if (!file) return
+  const files = event.target.files
+  if (!files || files.length === 0) return
   uploading.value = true
   try {
-    const res = await uploadProfileFile(file)
-    if (res.code === 200) {
-      form[field] = {
-        original_name: res.data.original_name,
-        stored_path: res.data.stored_path,
-        url: res.data.url,
-        mime_type: res.data.mime_type,
-        size: res.data.size,
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const res = await uploadProfileFile(file)
+      if (res.code === 200) {
+        form[field] = {
+          original_name: res.data.original_name,
+          stored_path: res.data.stored_path,
+          url: res.data.url,
+          mime_type: res.data.mime_type,
+          size: res.data.size,
+        }
       }
-      ElMessage.success('上传成功')
     }
+    ElMessage.success(`${files.length} 个文件上传成功`)
   } catch {
     ElMessage.error('上传失败')
   } finally {

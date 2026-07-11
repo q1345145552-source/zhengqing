@@ -57,7 +57,7 @@
         <el-form-item label="支付水单">
           <el-upload
             :auto-upload="false"
-            :limit="1"
+            :limit="10"
             :on-change="handleSlipChange"
             :on-remove="handleSlipRemove"
             :file-list="slipFileList"
