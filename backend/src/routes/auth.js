@@ -5,7 +5,7 @@ const auth = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 
 // 登录/注册限流：同一IP每分钟最多5次请求，防暴力破解
-const authLimiter = rateLimiter({ windowMs: 60000, max: 5, message: '请求过于频繁，请1分钟后再试' });
+const authLimiter = rateLimiter({ windowMs: 60000, max: 20, message: '请求过于频繁，请1分钟后再试' });
 
 // POST /api/auth/register - 客户注册
 router.post('/register', authLimiter, authController.register);
